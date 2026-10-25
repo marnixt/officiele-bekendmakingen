@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Officiële Bekendmakingen",
+        "description": "Follow official publications near your home zone.",
+        "data": {
+          "authority": "Authority",
+          "radius": "Radius",
+          "days": "Look back"
+        },
+        "data_description": {
+          "authority": "Name of the publishing authority exactly as on officielebekendmakingen.nl, e.g. a municipality.",
+          "radius": "Only publications within this distance of the home zone are included.",
+          "days": "How many days of publications to fetch."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the search service of officielebekendmakingen.nl.",
+      "unknown_authority": "No publications found for this authority. Check the spelling."
+    },
+    "abort": {
+      "already_configured": "This authority is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "nearby": {
+        "name": "Nearby publications"
+      },
+      "next_reaction_deadline": {
+        "name": "Next reaction deadline"
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Officiële Bekendmakingen",
+        "description": "Volg officiële bekendmakingen rond je thuiszone.",
+        "data": {
+          "authority": "Overheid",
+          "radius": "Straal",
+          "days": "Terugkijken"
+        },
+        "data_description": {
+          "authority": "Naam van de publicerende overheid zoals op officielebekendmakingen.nl, bijvoorbeeld een gemeente.",
+          "radius": "Alleen bekendmakingen binnen deze afstand van de thuiszone worden meegenomen.",
+          "days": "Hoeveel dagen aan bekendmakingen er worden opgehaald."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "De zoekdienst van officielebekendmakingen.nl is niet bereikbaar.",
+      "unknown_authority": "Geen bekendmakingen gevonden voor deze overheid. Controleer de spelling."
+    },
+    "abort": {
+      "already_configured": "Deze overheid is al ingesteld."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "nearby": {
+        "name": "Bekendmakingen in de buurt"
+      },
+      "next_reaction_deadline": {
+        "name": "Eerstvolgende reactietermijn"
+      }
+    }
+  }
+}
