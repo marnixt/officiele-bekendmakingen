@@ -47,3 +47,6 @@ home-assistant.log*
 *.db
 *.sqlite*
 secrets.yaml
+
+# Local editor workspace (contains local paths)
+*.code-workspace
