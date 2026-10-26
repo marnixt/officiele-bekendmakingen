@@ -3,25 +3,34 @@
     "step": {
       "user": {
         "title": "Officiële Bekendmakingen",
-        "description": "Volg officiële bekendmakingen rond je thuiszone.",
+        "description": "Volg officiële bekendmakingen rond een zone.",
         "data": {
-          "authority": "Overheid",
+          "zone": "Zone",
           "radius": "Straal",
           "days": "Terugkijken"
         },
         "data_description": {
-          "authority": "Naam van de publicerende overheid zoals op officielebekendmakingen.nl, bijvoorbeeld een gemeente.",
-          "radius": "Alleen bekendmakingen binnen deze afstand van de thuiszone worden meegenomen.",
+          "zone": "De afstand tot bekendmakingen wordt gemeten vanaf het midden van deze zone.",
+          "radius": "Alleen bekendmakingen binnen deze afstand van de zone worden meegenomen.",
           "days": "Hoeveel dagen aan bekendmakingen er worden opgehaald."
+        }
+      },
+      "authorities": {
+        "title": "Overheden",
+        "description": "Overheden waarvan het gebied binnen de straal van {zone} ligt. De overheden waarin de zone zelf ligt, zijn geselecteerd.",
+        "data": {
+          "authorities": "Overheden"
         }
       }
     },
     "error": {
-      "cannot_connect": "De zoekdienst van officielebekendmakingen.nl is niet bereikbaar.",
-      "unknown_authority": "Geen bekendmakingen gevonden voor deze overheid. Controleer de spelling."
+      "cannot_connect": "De PDOK Locatieserver is niet bereikbaar om de overheden rond de zone op te zoeken.",
+      "invalid_zone": "Deze zone heeft geen locatie.",
+      "no_authorities_found": "Geen overheden gevonden rond deze zone. Ligt hij in Nederland?",
+      "no_authorities_selected": "Selecteer minstens één overheid."
     },
     "abort": {
-      "already_configured": "Deze overheid is al ingesteld."
+      "already_configured": "Deze zone is al ingesteld."
     }
   },
   "entity": {

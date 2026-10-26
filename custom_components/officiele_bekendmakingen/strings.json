@@ -3,25 +3,34 @@
     "step": {
       "user": {
         "title": "Officiële Bekendmakingen",
-        "description": "Follow official publications near your home zone.",
+        "description": "Follow official publications around a zone.",
         "data": {
-          "authority": "Authority",
+          "zone": "Zone",
           "radius": "Radius",
           "days": "Look back"
         },
         "data_description": {
-          "authority": "Name of the publishing authority exactly as on officielebekendmakingen.nl, e.g. a municipality.",
-          "radius": "Only publications within this distance of the home zone are included.",
+          "zone": "Publications are measured from the centre of this zone.",
+          "radius": "Only publications within this distance of the zone are included.",
           "days": "How many days of publications to fetch."
+        }
+      },
+      "authorities": {
+        "title": "Authorities",
+        "description": "Authorities whose area lies within the radius of {zone}. The ones the zone itself lies in are selected.",
+        "data": {
+          "authorities": "Authorities"
         }
       }
     },
     "error": {
-      "cannot_connect": "Cannot reach the search service of officielebekendmakingen.nl.",
-      "unknown_authority": "No publications found for this authority. Check the spelling."
+      "cannot_connect": "Cannot reach the PDOK Locatieserver to look up the authorities around the zone.",
+      "invalid_zone": "This zone has no location.",
+      "no_authorities_found": "No authorities found around this zone. Is it in the Netherlands?",
+      "no_authorities_selected": "Select at least one authority."
     },
     "abort": {
-      "already_configured": "This authority is already configured."
+      "already_configured": "This zone is already configured."
     }
   },
   "entity": {

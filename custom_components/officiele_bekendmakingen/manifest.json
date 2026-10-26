@@ -3,11 +3,11 @@
   "name": "Officiële Bekendmakingen",
   "codeowners": ["@marnixt"],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": ["zone"],
   "documentation": "https://github.com/marnixt/officiele-bekendmakingen",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/marnixt/officiele-bekendmakingen/issues",
   "requirements": [],
-  "version": "0.2.0"
+  "version": "0.3.0"
 }

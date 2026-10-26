@@ -142,20 +142,21 @@ class SruClient:
         return parse_response(body)
 
     @staticmethod
-    def _query(authority: str, since: date | None = None) -> str:
-        query = f"c.product-area==officielepublicaties AND dt.creator=={_quote(authority)}"
+    def _query(authorities: list[str], since: date | None = None) -> str:
+        creators = " OR ".join(f"dt.creator=={_quote(a)}" for a in authorities)
+        query = f"c.product-area==officielepublicaties AND ({creators})"
         if since is not None:
             query += f" AND dt.modified>={since.isoformat()}"
         return query
 
     async def async_count(self, authority: str) -> int:
         """Return how many publications an authority has (used to validate its name)."""
-        total, _ = await self._request(self._query(authority), 1, 1)
+        total, _ = await self._request(self._query([authority]), 1, 1)
         return total
 
-    async def async_search(self, authority: str, since: date) -> list[Bekendmaking]:
-        """Return all publications of an authority modified on or after a date."""
-        query = self._query(authority, since)
+    async def async_search(self, authorities: list[str], since: date) -> list[Bekendmaking]:
+        """Return all publications of the authorities modified on or after a date."""
+        query = self._query(authorities, since)
         items: list[Bekendmaking] = []
         start = 1
         while True:

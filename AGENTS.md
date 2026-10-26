@@ -4,11 +4,16 @@
 - Keep user documentation generic (no local paths, no private server references).
 
 ## Data source
-- Only the SRU search service at `https://repository.overheid.nl/sru` (SRU 2.0, CQL queries).
-  Do not use the RSS feed or per-item metadata/XML downloads: SRU already returns everything needed.
-- Query: `c.product-area==officielepublicaties AND dt.creator=="<authority>" AND dt.modified>=<date>`.
+- Publications come only from the SRU search service at `https://repository.overheid.nl/sru` (SRU 2.0, CQL
+  queries). Do not use the RSS feed or per-item metadata/XML downloads: SRU already returns everything needed.
+- Query: `c.product-area==officielepublicaties AND (dt.creator=="<a>" OR dt.creator=="<b>") AND dt.modified>=<date>`.
 - `maximumRecords` is at most 1000; larger values return a diagnostic instead of records. Page with `startRecord`.
-- An unknown or misspelled authority returns 0 records, which the config flow uses for validation.
+- An unknown or misspelled authority returns 0 records.
+- SRU's spatial indexes (`w.locatiepunt`, `cd.afgeleideLocatieGebied`, relation `within`) fail server-side
+  ("Undefined simple type point"), so SRU cannot be searched by location.
+- The config flow uses the PDOK Locatieserver reverse endpoint
+  (`type=gemeente&type=provincie&type=waterschap&distance=<radius>`) to suggest authorities around a zone.
+  Its `gemeentenaam`, `provincienaam` and `waterschapsnaam` match `dt.creator` exactly.
 - Useful fields per record: `dcterms:type` (rubriek), `overheidwetgeving:activiteit`,
   `overheidwetgeving:datumEindeReactietermijn`, `overheidwetgeving:locatiegebied` (WGS84 WKT, "lon lat"),
   `gzd:preferredUrl`.
@@ -23,11 +28,13 @@
 ## Status and next steps
 - 0.1.0 scaffold: SRU client, config flow (authority, radius, days), coordinator that filters by distance
   to the HA home location, sensors "nearby" (count + items) and "next_reaction_deadline".
-- Not yet run inside Home Assistant. Repository: https://github.com/marnixt/officiele-bekendmakingen.
+- Repository: https://github.com/marnixt/officiele-bekendmakingen.
 - 0.2.0: `geo_location` entities (one per nearby publication, capped at `MAX_MAP_ITEMS`); entities that
   drop out are removed from the entity registry.
-- Next: an event for new publications (for notifications), filters on rubriek/activiteit, an options flow to change
-  radius/days, optionally several authorities per entry (water board, province).
+- 0.3.0: config entry per zone (unique id = zone entity id) with a list of authorities picked in a second
+  step; event `officiele_bekendmakingen_new_publication`, with announced ids kept in a `Store` (nothing is
+  announced on the first run).
+- Next: filters on rubriek/activiteit, an options flow to change authorities/radius/days.
 
 ## Conventions
 - Errors from the service raise `UpdateFailed`; never return stale data silently.
