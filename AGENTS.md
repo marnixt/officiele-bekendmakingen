@@ -24,7 +24,9 @@
 - 0.1.0 scaffold: SRU client, config flow (authority, radius, days), coordinator that filters by distance
   to the HA home location, sensors "nearby" (count + items) and "next_reaction_deadline".
 - Not yet run inside Home Assistant. Repository: https://github.com/marnixt/officiele-bekendmakingen.
-- Next: `geo_location` entities for the map, filters on rubriek/activiteit, an options flow to change
+- 0.2.0: `geo_location` entities (one per nearby publication, capped at `MAX_MAP_ITEMS`); entities that
+  drop out are removed from the entity registry.
+- Next: an event for new publications (for notifications), filters on rubriek/activiteit, an options flow to change
   radius/days, optionally several authorities per entry (water board, province).
 
 ## Conventions

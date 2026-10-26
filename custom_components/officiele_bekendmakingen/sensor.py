@@ -27,22 +27,6 @@ async def async_setup_entry(
     )
 
 
-def _as_dict(nearby: NearbyBekendmaking) -> dict[str, Any]:
-    item = nearby.item
-    return {
-        "title": item.title,
-        "rubriek": item.rubriek,
-        "activiteit": item.activiteit,
-        "authority": item.authority,
-        "published": item.published.isoformat() if item.published else None,
-        "reaction_deadline": (
-            item.reaction_deadline.isoformat() if item.reaction_deadline else None
-        ),
-        "distance_m": round(nearby.distance_m) if nearby.distance_m is not None else None,
-        "url": item.url,
-    }
-
-
 class BekendmakingenEntity(CoordinatorEntity[BekendmakingenCoordinator]):
     _attr_has_entity_name = True
 
@@ -74,7 +58,7 @@ class NearbyCountSensor(BekendmakingenEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"items": [_as_dict(n) for n in self.coordinator.data[:MAX_ATTRIBUTE_ITEMS]]}
+        return {"items": [n.as_dict() for n in self.coordinator.data[:MAX_ATTRIBUTE_ITEMS]]}
 
 
 class NextReactionDeadlineSensor(BekendmakingenEntity, SensorEntity):
@@ -104,4 +88,4 @@ class NextReactionDeadlineSensor(BekendmakingenEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"items": [_as_dict(n) for n in self._open()[:MAX_ATTRIBUTE_ITEMS]]}
+        return {"items": [n.as_dict() for n in self._open()[:MAX_ATTRIBUTE_ITEMS]]}

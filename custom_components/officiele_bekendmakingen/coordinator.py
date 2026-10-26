@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -34,7 +35,37 @@ class NearbyBekendmaking:
     """A publication together with its distance to the home zone."""
 
     item: Bekendmaking
-    distance_m: float | None
+    distance_m: float
+    # (latitude, longitude) of the marked area closest to the home zone.
+    location: tuple[float, float]
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the publication as entity attributes."""
+        item = self.item
+        return {
+            "title": item.title,
+            "rubriek": item.rubriek,
+            "activiteit": item.activiteit,
+            "authority": item.authority,
+            "published": item.published.isoformat() if item.published else None,
+            "reaction_deadline": (
+                item.reaction_deadline.isoformat() if item.reaction_deadline else None
+            ),
+            "distance_m": round(self.distance_m),
+            "url": item.url,
+        }
+
+
+def nearest_location(
+    home: tuple[float, float], locations: tuple[tuple[float, float], ...]
+) -> tuple[float, tuple[float, float]] | None:
+    """Return the distance in metres to, and the position of, the location closest to home."""
+    candidates = [
+        (d, location)
+        for location in locations
+        if (d := distance(home[0], home[1], location[0], location[1])) is not None
+    ]
+    return min(candidates, key=lambda c: c[0], default=None)
 
 
 class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]]):
@@ -55,15 +86,6 @@ class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]])
     def _setting(self, key: str, default: int) -> int:
         return int(self.config_entry.options.get(key, self.config_entry.data.get(key, default)))
 
-    def _distance(self, item: Bekendmaking) -> float | None:
-        distances = [
-            d
-            for lat, lon in item.locations
-            if (d := distance(self.hass.config.latitude, self.hass.config.longitude, lat, lon))
-            is not None
-        ]
-        return min(distances, default=None)
-
     async def _async_update_data(self) -> list[NearbyBekendmaking]:
         since = dt_util.now().date() - timedelta(days=self._setting(CONF_DAYS, DEFAULT_DAYS))
         try:
@@ -74,10 +96,11 @@ class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]])
             raise UpdateFailed(str(err)) from err
 
         radius = self._setting(CONF_RADIUS, DEFAULT_RADIUS)
-        nearby = [
-            NearbyBekendmaking(item, dist)
-            for item in items
-            if (dist := self._distance(item)) is not None and dist <= radius
-        ]
-        nearby.sort(key=lambda n: n.distance_m or 0)
+        home = (self.hass.config.latitude, self.hass.config.longitude)
+        nearby = []
+        for item in items:
+            closest = nearest_location(home, item.locations)
+            if closest is not None and closest[0] <= radius:
+                nearby.append(NearbyBekendmaking(item, *closest))
+        nearby.sort(key=lambda n: n.distance_m)
         return nearby

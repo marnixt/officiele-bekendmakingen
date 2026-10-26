@@ -4,7 +4,7 @@ Follow official government publications (permits, events, traffic decisions, tre
 near your home, using the public SRU search service of
 [officielebekendmakingen.nl](https://www.officielebekendmakingen.nl).
 
-> Status: early development (0.1.0).
+> Status: early development (0.2.0).
 
 ## Features
 - Configure a publishing authority (for example your municipality), a radius around the home
@@ -12,6 +12,16 @@ near your home, using the public SRU search service of
 - **Nearby publications** sensor: the number of publications within the radius, with the closest
   ones (title, rubriek, activity, distance, link) as attributes.
 - **Next reaction deadline** sensor: the first upcoming end of a reaction or objection period.
+- **Map**: every publication within the radius (up to 50, closest first) is a `geo_location`
+  entity at the centre of its marked area. Entities appear and disappear as publications come
+  and go.
+
+## Map card
+```yaml
+type: map
+geo_location_sources:
+  - officiele_bekendmakingen
+```
 
 ## Installation
 1. Add this repository as a custom repository in HACS (category: Integration).

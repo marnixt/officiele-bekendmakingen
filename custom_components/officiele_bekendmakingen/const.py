@@ -19,3 +19,5 @@ SCAN_INTERVAL = timedelta(hours=1)
 
 # Number of publications exposed in the sensor attributes.
 MAX_ATTRIBUTE_ITEMS = 20
+# Number of publications shown on the map as geo_location entities (closest first).
+MAX_MAP_ITEMS = 50

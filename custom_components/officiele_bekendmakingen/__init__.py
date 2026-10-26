@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import BekendmakingenConfigEntry, BekendmakingenCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.GEO_LOCATION, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BekendmakingenConfigEntry) -> bool:
