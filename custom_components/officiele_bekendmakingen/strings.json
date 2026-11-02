@@ -36,11 +36,99 @@
   "entity": {
     "sensor": {
       "nearby": {
-        "name": "Nearby publications"
+        "name": "Nearby publications",
+        "state_attributes": {
+          "items": {
+            "name": "Publications"
+          }
+        }
       },
       "next_reaction_deadline": {
-        "name": "Next reaction deadline"
+        "name": "Next reaction deadline",
+        "state_attributes": {
+          "items": {
+            "name": "Publications"
+          }
+        }
       }
+    },
+    "geo_location": {
+      "publication": {
+        "state_attributes": {
+          "title": {
+            "name": "Title"
+          },
+          "rubriek": {
+            "name": "Category"
+          },
+          "activiteit": {
+            "name": "Activity"
+          },
+          "abstract": {
+            "name": "Description"
+          },
+          "authority": {
+            "name": "Authority"
+          },
+          "published": {
+            "name": "Published"
+          },
+          "reaction_deadline": {
+            "name": "Reaction deadline"
+          },
+          "distance_m": {
+            "name": "Distance (m)"
+          },
+          "url": {
+            "name": "Link"
+          },
+          "summary": {
+            "name": "Summary"
+          },
+          "zone": {
+            "name": "Zone"
+          },
+          "impact": {
+            "name": "Impact",
+            "state": {
+              "low": "Low",
+              "medium": "Medium",
+              "high": "High"
+            }
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "description": "Change the radius and look-back period, and choose an AI task entity to summarise publications.",
+        "data": {
+          "radius": "Radius",
+          "days": "Look back",
+          "ai_task_entity": "AI task for summaries"
+        },
+        "data_description": {
+          "radius": "Only publications within this distance of the zone are included.",
+          "days": "How many days of publications to fetch.",
+          "ai_task_entity": "Each publication within the radius is summarised once with this AI task entity. Leave empty to turn summaries off."
+        }
+      },
+      "authorities": {
+        "title": "Authorities",
+        "description": "Authorities whose area lies within the radius of {zone}. The ones the zone itself lies in are selected.",
+        "data": {
+          "authorities": "Authorities"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the PDOK Locatieserver to look up the authorities around the zone.",
+      "invalid_zone": "This zone has no location.",
+      "no_authorities_found": "No authorities found around this zone. Is it in the Netherlands?",
+      "no_authorities_selected": "Select at least one authority."
     }
   }
 }

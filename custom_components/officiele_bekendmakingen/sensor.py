@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, MAX_ATTRIBUTE_ITEMS
+from .const import DOMAIN
 from .coordinator import BekendmakingenConfigEntry, BekendmakingenCoordinator, NearbyBekendmaking
 
 
@@ -58,7 +58,7 @@ class NearbyCountSensor(BekendmakingenEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"items": [n.as_dict() for n in self.coordinator.data[:MAX_ATTRIBUTE_ITEMS]]}
+        return {"items": self.coordinator.items_as_dicts(self.coordinator.data)}
 
 
 class NextReactionDeadlineSensor(BekendmakingenEntity, SensorEntity):
@@ -88,4 +88,4 @@ class NextReactionDeadlineSensor(BekendmakingenEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"items": [n.as_dict() for n in self._open()[:MAX_ATTRIBUTE_ITEMS]]}
+        return {"items": self.coordinator.items_as_dicts(self._open())}

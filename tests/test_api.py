@@ -25,6 +25,7 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
         </overheidwetgeving:owmskern>
         <overheidwetgeving:owmsmantel>
           <dcterms:date>2026-10-23</dcterms:date>
+          <dcterms:abstract>Z2026-1 - kappen van een eik</dcterms:abstract>
         </overheidwetgeving:owmsmantel>
         <overheidwetgeving:tpmeta>
           <overheidwetgeving:activiteit>kappen</overheidwetgeving:activiteit>
@@ -35,6 +36,7 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
         </overheidwetgeving:tpmeta>
       </overheidwetgeving:meta></gzd:originalData>
       <gzd:enrichedData>
+        <gzd:url>https://repository.overheid.nl/frbr/officielepublicaties/gmb/2026/gmb-2026-1/1/xml/gmb-2026-1.xml</gzd:url>
         <gzd:preferredUrl>https://zoek.officielebekendmakingen.nl/gmb-2026-1.html</gzd:preferredUrl>
       </gzd:enrichedData>
     </gzd:gzd></sru:recordData></sru:record>
@@ -63,6 +65,8 @@ def test_parse_response_full_record():
     assert item.reaction_deadline == date(2026, 12, 2)
     assert item.url == "https://zoek.officielebekendmakingen.nl/gmb-2026-1.html"
     assert item.locations == (pytest.approx((51.1, 5.1)),)
+    assert item.abstract == "Z2026-1 - kappen van een eik"
+    assert item.content_url.endswith("/xml/gmb-2026-1.xml")
 
 
 def test_parse_response_minimal_record():
@@ -72,6 +76,8 @@ def test_parse_response_minimal_record():
     assert item.title == "gmb-2026-2"
     assert item.locations == ()
     assert item.reaction_deadline is None
+    assert item.abstract is None
+    assert item.content_url is None
 
 
 def test_wkt_centroid_point_is_lat_lon():

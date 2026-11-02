@@ -40,6 +40,10 @@ class Bekendmaking:
     url: str | None
     # (latitude, longitude) of each marked area, as WGS84 centroids.
     locations: tuple[tuple[float, float], ...] = field(default_factory=tuple)
+    # Short description that some authorities add, e.g. "vervangen van de dakkapel".
+    abstract: str | None = None
+    # The full text as XML; only fetched for AI summaries.
+    content_url: str | None = None
 
 
 def _parse_date(value: str | None) -> date | None:
@@ -95,6 +99,8 @@ def parse_record(record: ET.Element) -> Bekendmaking | None:
         reaction_deadline=_parse_date(_text(meta, "ow:tpmeta/ow:datumEindeReactietermijn")),
         url=_text(record, ".//gzd:preferredUrl"),
         locations=locations,
+        abstract=_text(meta, "ow:owmsmantel/dcterms:abstract"),
+        content_url=_text(record, ".//gzd:enrichedData/gzd:url"),
     )
 
 

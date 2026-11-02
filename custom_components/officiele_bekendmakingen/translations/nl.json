@@ -36,11 +36,99 @@
   "entity": {
     "sensor": {
       "nearby": {
-        "name": "Bekendmakingen in de buurt"
+        "name": "Bekendmakingen in de buurt",
+        "state_attributes": {
+          "items": {
+            "name": "Bekendmakingen"
+          }
+        }
       },
       "next_reaction_deadline": {
-        "name": "Eerstvolgende reactietermijn"
+        "name": "Eerstvolgende reactietermijn",
+        "state_attributes": {
+          "items": {
+            "name": "Bekendmakingen"
+          }
+        }
       }
+    },
+    "geo_location": {
+      "publication": {
+        "state_attributes": {
+          "title": {
+            "name": "Titel"
+          },
+          "rubriek": {
+            "name": "Rubriek"
+          },
+          "activiteit": {
+            "name": "Activiteit"
+          },
+          "abstract": {
+            "name": "Omschrijving"
+          },
+          "authority": {
+            "name": "Bevoegd gezag"
+          },
+          "published": {
+            "name": "Gepubliceerd"
+          },
+          "reaction_deadline": {
+            "name": "Einde reactietermijn"
+          },
+          "distance_m": {
+            "name": "Afstand (m)"
+          },
+          "url": {
+            "name": "Link"
+          },
+          "summary": {
+            "name": "Samenvatting"
+          },
+          "zone": {
+            "name": "Zone"
+          },
+          "impact": {
+            "name": "Impact",
+            "state": {
+              "low": "Laag",
+              "medium": "Middel",
+              "high": "Hoog"
+            }
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opties",
+        "description": "Wijzig de straal en de periode, en kies een AI-taak om bekendmakingen samen te vatten.",
+        "data": {
+          "radius": "Straal",
+          "days": "Terugkijken",
+          "ai_task_entity": "AI-taak voor samenvattingen"
+        },
+        "data_description": {
+          "radius": "Alleen bekendmakingen binnen deze afstand van de zone worden meegenomen.",
+          "days": "Hoeveel dagen aan bekendmakingen er worden opgehaald.",
+          "ai_task_entity": "Elke bekendmaking binnen de straal wordt één keer samengevat met deze AI-taak. Laat leeg om samenvattingen uit te zetten."
+        }
+      },
+      "authorities": {
+        "title": "Overheden",
+        "description": "Overheden waarvan het gebied binnen de straal van {zone} ligt. De overheden waarin de zone zelf ligt, zijn geselecteerd.",
+        "data": {
+          "authorities": "Overheden"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "De PDOK Locatieserver is niet bereikbaar om de overheden rond de zone op te zoeken.",
+      "invalid_zone": "Deze zone heeft geen locatie.",
+      "no_authorities_found": "Geen overheden gevonden rond deze zone. Ligt hij in Nederland?",
+      "no_authorities_selected": "Selecteer minstens één overheid."
     }
   }
 }

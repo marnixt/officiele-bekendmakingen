@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.geo_location import GeolocationEvent
 from homeassistant.const import UnitOfLength
 from homeassistant.core import HomeAssistant, callback
@@ -9,8 +11,13 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MAX_MAP_ITEMS
-from .coordinator import BekendmakingenConfigEntry, BekendmakingenCoordinator, NearbyBekendmaking
+from .const import CONF_ZONE, DOMAIN, MAX_MAP_ITEMS
+from .coordinator import (
+    BekendmakingenConfigEntry,
+    BekendmakingenCoordinator,
+    NearbyBekendmaking,
+    publication_icon,
+)
 
 PLATFORM_DOMAIN = "geo_location"
 
@@ -42,13 +49,13 @@ async def async_setup_entry(
             # Removing the registry entry also removes the entity from the state machine.
             if entity.entity_id and registry.async_get(entity.entity_id):
                 registry.async_remove(entity.entity_id)
-        new = [
-            PublicationEvent(coordinator, key, n)
-            for key, n in current.items()
-            if key not in entities
-        ]
-        for entity in new:
-            entities[entity.unique_id] = entity
+        new = []
+        for key, nearby in current.items():
+            if key in entities:
+                entities[key].nearby = nearby
+            else:
+                entities[key] = PublicationEvent(coordinator, key, nearby)
+                new.append(entities[key])
         if new:
             async_add_entities(new)
 
@@ -65,14 +72,31 @@ class PublicationEvent(CoordinatorEntity[BekendmakingenCoordinator], Geolocation
 
     _attr_source = DOMAIN
     _attr_unit_of_measurement = UnitOfLength.KILOMETERS
-    _attr_icon = "mdi:file-document-outline"
+    _attr_translation_key = "publication"
 
     def __init__(
         self, coordinator: BekendmakingenCoordinator, unique_id: str, nearby: NearbyBekendmaking
     ) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = unique_id
+        self.nearby = nearby
+
+    @property
+    def nearby(self) -> NearbyBekendmaking:
+        return self._nearby
+
+    @nearby.setter
+    def nearby(self, nearby: NearbyBekendmaking) -> None:
+        """Take over the latest data of the publication (e.g. a changed reaction deadline)."""
+        self._nearby = nearby
         self._attr_name = nearby.item.title
+        self._attr_icon = publication_icon(nearby.item)
         self._attr_latitude, self._attr_longitude = nearby.location
         self._attr_distance = nearby.distance_m / 1000
-        self._attr_extra_state_attributes = nearby.as_dict()
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            **self._nearby.as_dict(self.coordinator.summary(self._nearby.item.identifier)),
+            "zone": self.coordinator.config_entry.data[CONF_ZONE],
+        }
