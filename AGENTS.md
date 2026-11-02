@@ -42,6 +42,8 @@
   publications after summarising them; map card `custom:bekendmakingen-map-card` in `frontend/`, served by
   the integration and loaded with `add_extra_js_url`. Plain JS without a build step; Leaflet 1.9.4 is vendored
   in `frontend/leaflet/` and loaded with `noConflict()`. Background tiles from PDOK (no key needed).
+- Brand icon: `brand/icon.png` (+ `@2x`, `dark_`) is `mdi:bullhorn-outline` rendered as PNG (256/512 px,
+  transparent, trimmed). HA serves it since 2026.3; HACS/Marketplace picks it up from the latest GitHub release.
 - Next: filters on rubriek/activiteit in the integration itself.
 
 ## Conventions
