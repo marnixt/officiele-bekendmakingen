@@ -108,12 +108,14 @@
         "data": {
           "radius": "Straal",
           "days": "Terugkijken",
-          "ai_task_entity": "AI-taak voor samenvattingen"
+          "ai_task_entity": "AI-taak voor samenvattingen",
+          "summary_language": "Taal van de samenvattingen"
         },
         "data_description": {
           "radius": "Alleen bekendmakingen binnen deze afstand van de zone worden meegenomen.",
           "days": "Hoeveel dagen aan bekendmakingen er worden opgehaald.",
-          "ai_task_entity": "Elke bekendmaking binnen de straal wordt één keer samengevat met deze AI-taak. Laat leeg om samenvattingen uit te zetten."
+          "ai_task_entity": "Elke bekendmaking binnen de straal wordt één keer samengevat met deze AI-taak. Laat leeg om samenvattingen uit te zetten.",
+          "summary_language": "Taal waarin de samenvattingen worden geschreven. Bestaande samenvattingen in een andere taal worden opnieuw gemaakt."
         }
       },
       "authorities": {

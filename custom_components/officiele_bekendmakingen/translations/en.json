@@ -108,12 +108,14 @@
         "data": {
           "radius": "Radius",
           "days": "Look back",
-          "ai_task_entity": "AI task for summaries"
+          "ai_task_entity": "AI task for summaries",
+          "summary_language": "Summary language"
         },
         "data_description": {
           "radius": "Only publications within this distance of the zone are included.",
           "days": "How many days of publications to fetch.",
-          "ai_task_entity": "Each publication within the radius is summarised once with this AI task entity. Leave empty to turn summaries off."
+          "ai_task_entity": "Each publication within the radius is summarised once with this AI task entity. Leave empty to turn summaries off.",
+          "summary_language": "Language the summaries are written in. Existing summaries in another language are rewritten."
         }
       },
       "authorities": {

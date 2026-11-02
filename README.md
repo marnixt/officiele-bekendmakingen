@@ -83,6 +83,8 @@ geo_location_sources:
 1. Set up an AI integration that provides an AI task entity (for example OpenAI, Google
    Gemini, Anthropic or Ollama).
 2. Open the options of a zone and choose that entity under *AI task for summaries*.
+3. Optionally pick another *Summary language*; the default is Dutch, the language of the
+   publications. Summaries in another language are rewritten after a change.
 
 The integration then fetches the text of each publication within the radius once and asks
 the AI task for a summary and an impact rating. Summaries are stored, so a publication is

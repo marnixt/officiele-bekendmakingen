@@ -24,10 +24,12 @@ from .const import (
     CONF_AUTHORITIES,
     CONF_DAYS,
     CONF_RADIUS,
+    CONF_SUMMARY_LANGUAGE,
     CONF_ZONE,
     DEFAULT_DAYS,
     DEFAULT_ICON,
     DEFAULT_RADIUS,
+    DEFAULT_SUMMARY_LANGUAGE,
     DOMAIN,
     EVENT_NEW_PUBLICATION,
     MAX_ATTRIBUTE_ITEMS,
@@ -105,11 +107,20 @@ def update_seen(
     return new, updated
 
 
+def needs_summary(
+    summaries: dict[str, dict[str, str]], identifier: str, language: str
+) -> bool:
+    """Return whether a publication has no summary yet, or one in another language."""
+    return summaries.get(identifier, {}).get("language") != language
+
+
 def summary_backlog(
-    nearby: list[NearbyBekendmaking], summaries: dict[str, dict[str, str]]
+    nearby: list[NearbyBekendmaking], summaries: dict[str, dict[str, str]], language: str
 ) -> list[NearbyBekendmaking]:
     """Return the publications on the map that still need a summary, closest first."""
-    missing = [n for n in nearby[:MAX_MAP_ITEMS] if n.item.identifier not in summaries]
+    missing = [
+        n for n in nearby[:MAX_MAP_ITEMS] if needs_summary(summaries, n.item.identifier, language)
+    ]
     return missing[:MAX_SUMMARIES_PER_UPDATE]
 
 
@@ -156,6 +167,10 @@ class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]])
     def ai_task_entity(self) -> str | None:
         """The AI task entity that writes summaries, if one is configured."""
         return self._setting(CONF_AI_TASK_ENTITY)
+
+    @property
+    def summary_language(self) -> str:
+        return self._setting(CONF_SUMMARY_LANGUAGE, DEFAULT_SUMMARY_LANGUAGE)
 
     def summary(self, identifier: str) -> dict[str, str] | None:
         """Return the AI summary of a publication, if there is one."""
@@ -222,7 +237,7 @@ class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]])
                 nearby = self._pending.pop(0)
                 changed |= await self._async_summarize(nearby.item)
                 self._announce(nearby)
-            for nearby in summary_backlog(self._latest, self._summaries):
+            for nearby in summary_backlog(self._latest, self._summaries, self.summary_language):
                 if self._pending:
                     break  # announce publications that came in meanwhile first
                 changed |= await self._async_summarize(nearby.item)
@@ -242,12 +257,13 @@ class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]])
         """Summarise a publication if an AI task entity is set; return whether it worked."""
         assert self._summaries is not None
         entity_id = self.ai_task_entity
-        if entity_id is None or item.identifier in self._summaries:
+        language = self.summary_language
+        if entity_id is None or not needs_summary(self._summaries, item.identifier, language):
             return False
         try:
             text = await async_fetch_text(self._session, item)
             self._summaries[item.identifier] = await async_summarize(
-                self.hass, entity_id, item, text
+                self.hass, entity_id, item, text, language
             )
         except SummaryError as err:
             # Only the summary is missing; it is tried again on the next update.

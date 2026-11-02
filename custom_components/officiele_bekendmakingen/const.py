@@ -16,6 +16,7 @@ CONF_AUTHORITIES = "authorities"
 CONF_RADIUS = "radius"
 CONF_DAYS = "days"
 CONF_AI_TASK_ENTITY = "ai_task_entity"
+CONF_SUMMARY_LANGUAGE = "summary_language"
 
 DEFAULT_ZONE = "zone.home"
 DEFAULT_RADIUS = 1000  # metres around the zone
@@ -40,6 +41,8 @@ MAX_SUMMARIES_PER_UPDATE = 10
 # Publication texts are short; longer ones are cut off before they are sent to the AI.
 MAX_SUMMARY_INPUT_CHARS = 20000
 IMPACT_LEVELS = ["low", "medium", "high"]
+# Publications are in Dutch, so summaries are too unless another language is chosen.
+DEFAULT_SUMMARY_LANGUAGE = "nl"
 
 # Map card shipped with the integration.
 FRONTEND_URL_PATH = f"/{DOMAIN}/frontend"

@@ -72,9 +72,22 @@ def test_parse_result_unexpected_raises(response):
 
 def test_summary_backlog_skips_summarised_and_is_capped():
     nearby = [NearbyBekendmaking(_item(f"gmb-{i}"), i, (51.5, 5.0)) for i in range(30)]
-    backlog = summary_backlog(nearby, {"gmb-0": {"summary": "x"}})
+    backlog = summary_backlog(nearby, {"gmb-0": {"summary": "x", "language": "nl"}}, "nl")
     assert [n.item.identifier for n in backlog] == [
         f"gmb-{i}" for i in range(1, MAX_SUMMARIES_PER_UPDATE + 1)
+    ]
+
+
+def test_summary_in_another_language_is_redone():
+    summaries = {
+        "gmb-nl": {"summary": "Kort.", "language": "nl"},
+        "gmb-en": {"summary": "Short.", "language": "en"},
+        "gmb-old": {"summary": "Short."},
+    }
+    nearby = [NearbyBekendmaking(_item(i), 1.0, (51.5, 5.0)) for i in summaries]
+    assert [n.item.identifier for n in summary_backlog(nearby, summaries, "nl")] == [
+        "gmb-en",
+        "gmb-old",
     ]
 
 
@@ -106,9 +119,17 @@ def _coordinator(options: dict, summaries: dict, pending: list, latest: list):
 async def test_worker_summarises_before_announcing_and_forgets_old_summaries():
     new, older = (NearbyBekendmaking(_item(i), 10.0, (51.5, 5.0)) for i in ("gmb-new", "gmb-old"))
     coordinator = _coordinator(
-        {"ai_task_entity": "ai_task.test"}, {"gmb-gone": {"summary": "weg"}}, [new], [new, older]
+        {"ai_task_entity": "ai_task.test", "summary_language": "nl"},
+        {"gmb-gone": {"summary": "weg"}},
+        [new],
+        [new, older],
     )
-    summarize = AsyncMock(side_effect=lambda hass, entity, item, text: {"summary": item.identifier})
+    summarize = AsyncMock(
+        side_effect=lambda hass, entity, item, text, language: {
+            "summary": item.identifier,
+            "language": language,
+        }
+    )
     with (
         patch(f"{COORDINATOR}.async_fetch_text", AsyncMock(return_value="tekst")),
         patch(f"{COORDINATOR}.async_summarize", summarize),
@@ -120,8 +141,8 @@ async def test_worker_summarises_before_announcing_and_forgets_old_summaries():
     assert data["identifier"] == "gmb-new"
     assert data["summary"] == "gmb-new"
     assert coordinator._summaries == {
-        "gmb-new": {"summary": "gmb-new"},
-        "gmb-old": {"summary": "gmb-old"},
+        "gmb-new": {"summary": "gmb-new", "language": "nl"},
+        "gmb-old": {"summary": "gmb-old", "language": "nl"},
     }
     coordinator._summary_store.async_save.assert_awaited_once_with(coordinator._summaries)
     coordinator.async_update_listeners.assert_called_once()

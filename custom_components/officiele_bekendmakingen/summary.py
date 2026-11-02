@@ -93,11 +93,11 @@ def parse_result(response: Any) -> dict[str, str]:
 
 
 async def async_summarize(
-    hass: HomeAssistant, entity_id: str, item: Bekendmaking, text: str
+    hass: HomeAssistant, entity_id: str, item: Bekendmaking, text: str, language: str
 ) -> dict[str, str]:
     """Ask the AI task entity for a summary and impact rating of a publication."""
     instructions = INSTRUCTIONS.format(
-        language=hass.config.language,
+        language=language,
         title=item.title,
         rubriek=item.rubriek or "-",
         authority=item.authority or "-",
@@ -119,4 +119,4 @@ async def async_summarize(
             )
     except (HomeAssistantError, vol.Invalid, TimeoutError) as err:
         raise SummaryError(f"AI task {entity_id} failed: {err}") from err
-    return parse_result(response)
+    return {**parse_result(response), "language": language}

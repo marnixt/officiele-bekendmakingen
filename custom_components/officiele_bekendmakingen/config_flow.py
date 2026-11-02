@@ -17,6 +17,8 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
+    LanguageSelector,
+    LanguageSelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -31,9 +33,11 @@ from .const import (
     CONF_AUTHORITIES,
     CONF_DAYS,
     CONF_RADIUS,
+    CONF_SUMMARY_LANGUAGE,
     CONF_ZONE,
     DEFAULT_DAYS,
     DEFAULT_RADIUS,
+    DEFAULT_SUMMARY_LANGUAGE,
     DEFAULT_ZONE,
     DOMAIN,
 )
@@ -61,6 +65,9 @@ OPTIONS_SCHEMA = vol.Schema(
         vol.Required(CONF_RADIUS): RADIUS_SELECTOR,
         vol.Required(CONF_DAYS): DAYS_SELECTOR,
         vol.Optional(CONF_AI_TASK_ENTITY): EntitySelector(EntitySelectorConfig(domain="ai_task")),
+        vol.Required(CONF_SUMMARY_LANGUAGE): LanguageSelector(
+            LanguageSelectorConfig(native_name=True)
+        ),
     }
 )
 
@@ -192,15 +199,22 @@ class BekendmakingenOptionsFlow(OptionsFlowWithReload):
             # The zone cannot be changed here, so show zone errors for the whole form.
             errors = {"base" if key == CONF_ZONE else key: e for key, e in errors.items()}
             if not errors:
-                self._options = {CONF_RADIUS: radius, CONF_DAYS: int(user_input[CONF_DAYS])}
+                self._options = {
+                    CONF_RADIUS: radius,
+                    CONF_DAYS: int(user_input[CONF_DAYS]),
+                    CONF_SUMMARY_LANGUAGE: user_input[CONF_SUMMARY_LANGUAGE],
+                }
                 if user_input.get(CONF_AI_TASK_ENTITY):
                     self._options[CONF_AI_TASK_ENTITY] = user_input[CONF_AI_TASK_ENTITY]
                 return await self.async_step_authorities()
 
         suggested = user_input or {
-            key: value
-            for key in (CONF_RADIUS, CONF_DAYS, CONF_AI_TASK_ENTITY)
-            if (value := self._current(key)) is not None
+            CONF_SUMMARY_LANGUAGE: DEFAULT_SUMMARY_LANGUAGE,
+            **{
+                key: value
+                for key in (CONF_RADIUS, CONF_DAYS, CONF_AI_TASK_ENTITY, CONF_SUMMARY_LANGUAGE)
+                if (value := self._current(key)) is not None
+            },
         }
         return self.async_show_form(
             step_id="init",
