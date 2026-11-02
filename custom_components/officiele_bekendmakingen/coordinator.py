@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
+from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
@@ -20,6 +20,8 @@ from homeassistant.util.location import distance
 from .api import Bekendmaking, SruClient, SruError
 from .const import (
     ACTIVITEIT_ICONS,
+    AI_WAIT_ATTEMPTS,
+    AI_WAIT_INTERVAL,
     CONF_AI_TASK_ENTITY,
     CONF_AUTHORITIES,
     CONF_DAYS,
@@ -231,16 +233,23 @@ class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]])
     async def _async_work(self) -> None:
         """Summarise and announce new publications, then catch up on older ones."""
         assert self._summaries is not None
+        entity_id = self.ai_task_entity
+        if entity_id is not None and not await self._async_ai_available(entity_id):
+            _LOGGER.warning(
+                "AI task %s is not available; no summaries until the next update", entity_id
+            )
+            entity_id = None
         changed = False
         while True:
             while self._pending:
                 nearby = self._pending.pop(0)
-                changed |= await self._async_summarize(nearby.item)
+                changed |= await self._async_summarize(entity_id, nearby.item)
                 self._announce(nearby)
-            for nearby in summary_backlog(self._latest, self._summaries, self.summary_language):
-                if self._pending:
-                    break  # announce publications that came in meanwhile first
-                changed |= await self._async_summarize(nearby.item)
+            if entity_id is not None:
+                for nearby in summary_backlog(self._latest, self._summaries, self.summary_language):
+                    if self._pending:
+                        break  # announce publications that came in meanwhile first
+                    changed |= await self._async_summarize(entity_id, nearby.item)
             if not self._pending:
                 break
 
@@ -253,10 +262,19 @@ class BekendmakingenCoordinator(DataUpdateCoordinator[list[NearbyBekendmaking]])
             await self._summary_store.async_save(self._summaries)
             self.async_update_listeners()
 
-    async def _async_summarize(self, item: Bekendmaking) -> bool:
-        """Summarise a publication if an AI task entity is set; return whether it worked."""
+    async def _async_ai_available(self, entity_id: str) -> bool:
+        """Wait a while for the AI task entity, which may still be starting up."""
+        for attempt in range(AI_WAIT_ATTEMPTS):
+            state = self.hass.states.get(entity_id)
+            if state is not None and state.state != STATE_UNAVAILABLE:
+                return True
+            if attempt < AI_WAIT_ATTEMPTS - 1:
+                await asyncio.sleep(AI_WAIT_INTERVAL)
+        return False
+
+    async def _async_summarize(self, entity_id: str | None, item: Bekendmaking) -> bool:
+        """Summarise a publication with the AI task entity, if any; return whether it worked."""
         assert self._summaries is not None
-        entity_id = self.ai_task_entity
         language = self.summary_language
         if entity_id is None or not needs_summary(self._summaries, item.identifier, language):
             return False

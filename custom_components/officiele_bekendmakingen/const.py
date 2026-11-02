@@ -41,6 +41,9 @@ MAX_SUMMARIES_PER_UPDATE = 10
 # Publication texts are short; longer ones are cut off before they are sent to the AI.
 MAX_SUMMARY_INPUT_CHARS = 20000
 IMPACT_LEVELS = ["low", "medium", "high"]
+# After a restart the AI task entity may be set up after this integration; wait for it.
+AI_WAIT_INTERVAL = 30  # seconds
+AI_WAIT_ATTEMPTS = 10
 # Publications are in Dutch, so summaries are too unless another language is chosen.
 DEFAULT_SUMMARY_LANGUAGE = "nl"
 

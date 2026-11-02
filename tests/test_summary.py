@@ -161,3 +161,35 @@ async def test_worker_announces_without_ai_and_survives_failures():
         await coordinator._async_work()
     assert coordinator.hass.bus.async_fire.call_count == 1
     assert coordinator._summaries == {}
+
+
+@pytest.mark.asyncio
+async def test_worker_waits_for_ai_task_entity_after_restart():
+    new = NearbyBekendmaking(_item("gmb-new"), 10.0, (51.5, 5.0))
+    coordinator = _coordinator({"ai_task_entity": "ai_task.test"}, {}, [new], [new])
+    # The AI task entity only appears after the second check.
+    coordinator.hass.states.get.side_effect = [None, MagicMock(state="unavailable"), MagicMock(state="unknown")]
+    summarize = AsyncMock(return_value={"summary": "Kort.", "language": "nl"})
+    with (
+        patch(f"{COORDINATOR}.asyncio.sleep", AsyncMock()) as sleep,
+        patch(f"{COORDINATOR}.async_fetch_text", AsyncMock(return_value="tekst")),
+        patch(f"{COORDINATOR}.async_summarize", summarize),
+    ):
+        await coordinator._async_work()
+    assert sleep.await_count == 2
+    assert coordinator.hass.bus.async_fire.call_args.args[1]["summary"] == "Kort."
+
+
+@pytest.mark.asyncio
+async def test_worker_announces_when_ai_task_entity_never_appears():
+    new = NearbyBekendmaking(_item("gmb-new"), 10.0, (51.5, 5.0))
+    coordinator = _coordinator({"ai_task_entity": "ai_task.test"}, {}, [new], [new])
+    coordinator.hass.states.get.return_value = None
+    summarize = AsyncMock()
+    with (
+        patch(f"{COORDINATOR}.asyncio.sleep", AsyncMock()),
+        patch(f"{COORDINATOR}.async_summarize", summarize),
+    ):
+        await coordinator._async_work()
+    summarize.assert_not_awaited()
+    assert coordinator.hass.bus.async_fire.call_count == 1
