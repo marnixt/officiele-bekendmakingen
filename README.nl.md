@@ -6,7 +6,7 @@ bomenkap, …) bij jou in de buurt, via de openbare SRU-zoekdienst van
 
 *English: see [README.md](https://github.com/marnixt/officiele-bekendmakingen/blob/main/README.md).*
 
-> Status: vroege ontwikkeling (0.4.2).
+> Status: vroege ontwikkeling (0.4.3).
 
 ## Functies
 - Kies een zone (thuis of een andere zone), een straal eromheen en hoeveel dagen je terug wilt

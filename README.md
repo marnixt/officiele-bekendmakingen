@@ -6,7 +6,7 @@ near your home, using the public SRU search service of
 
 *Nederlands: zie [README.nl.md](https://github.com/marnixt/officiele-bekendmakingen/blob/main/README.nl.md).*
 
-> Status: early development (0.4.2).
+> Status: early development (0.4.3).
 
 ## Features
 - Choose a zone (home or any other zone), a radius around it and how many days to look back.
