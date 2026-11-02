@@ -4,7 +4,9 @@ Follow official government publications (permits, events, traffic decisions, tre
 near your home, using the public SRU search service of
 [officielebekendmakingen.nl](https://www.officielebekendmakingen.nl).
 
-> Status: early development (0.4.0).
+*Nederlands: zie [README.nl.md](https://github.com/marnixt/officiele-bekendmakingen/blob/main/README.nl.md).*
+
+> Status: early development (0.4.2).
 
 ## Features
 - Choose a zone (home or any other zone), a radius around it and how many days to look back.
@@ -26,7 +28,8 @@ near your home, using the public SRU search service of
 - **Event** `officiele_bekendmakingen_new_publication` for every publication that newly appears
   within the radius, including its summary when summaries are on. Publications already present
   when the integration is first set up are not announced.
-- **Options**: change the radius, look-back period, authorities and AI task entity afterwards
+- **Options**: change the radius, look-back period, authorities, AI task entity and summary
+  language afterwards
   under *Settings → Devices & services → Officiële Bekendmakingen → Configure*.
 
 ## Map card
@@ -90,7 +93,11 @@ The integration then fetches the text of each publication within the radius once
 the AI task for a summary and an impact rating. Summaries are stored, so a publication is
 never summarised twice. New publications are summarised before they are announced; older ones
 are caught up ten per hour, closest first. A failed summary only leaves the summary empty and
-is tried again an hour later. With a cloud AI service, each summary is one paid request.
+is tried again an hour later. After a restart the integration waits up to five minutes for the
+AI task entity to appear.
+
+With a cloud AI service, each summary is one paid request. As an indication: 100 summaries cost
+about 1 cent with gpt-6-luna.
 
 ## Notification on new publications
 The event data contains `title`, `rubriek`, `activiteit`, `abstract`, `authority`, `published`,
