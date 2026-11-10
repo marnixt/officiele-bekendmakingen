@@ -95,7 +95,7 @@ const DEFAULT_CONFIG = {
   open_only: false,
   show_list: false,
   list_sort: "distance",
-  // Height of the list and of the details next to it; 0 lets the list grow with its rows.
+  // Height of the list, which scrolls by itself; 0 lets it grow with its rows.
   list_height: 400,
   // details: select in the list and show the details next to it (needs the list).
   tap_action: "details",
@@ -153,7 +153,7 @@ const STRINGS = {
       open_only: "Alleen met open reactietermijn",
       show_list: "Lijst onder de kaart",
       list_sort: "Lijst sorteren op",
-      list_height: "Hoogte lijst en details (0 = geen limiet)",
+      list_height: "Hoogte lijst (0 = geen limiet)",
       tap_action: "Bij klikken op een marker",
     },
   },
@@ -208,7 +208,7 @@ const STRINGS = {
       open_only: "Only with an open reaction period",
       show_list: "List below the map",
       list_sort: "Sort list by",
-      list_height: "Height of list and details (0 = no limit)",
+      list_height: "Height of the list (0 = no limit)",
       tap_action: "When a marker is clicked",
     },
   },
@@ -399,7 +399,7 @@ const CSS = `
   .impact.low { background: #2e7d32; }
   .impact.medium { background: #e8710a; }
   .impact.high { background: #c62828; }
-  .info .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .info .actions { display: flex; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
   .info .actions a, .info .actions button {
     display: inline-flex;
     align-items: center;
@@ -495,8 +495,10 @@ const CSS = `
   /* List and details: side by side on a wide card, details above the list on a narrow one. */
   .panes { display: flex; flex-direction: column; border-top: 1px solid var(--divider-color); }
   .wide .panes { flex-direction: row; }
-  .rows, .details { min-width: 0; overflow-y: auto; max-height: var(--list-height, none); }
-  .rows { position: relative; flex: 1; padding: 4px 0; }
+  /* Only the list scrolls; the details are as tall as their content. */
+  .rows { position: relative; flex: 1; min-width: 0; padding: 4px 0; overflow-y: auto; max-height: var(--list-height, none); }
+  .wide .rows { align-self: flex-start; }
+  .details { min-width: 0; }
   .details { order: -1; padding: 12px 16px; border-bottom: 1px solid var(--divider-color); }
   .details[hidden] { display: none; }
   .wide .details {
@@ -1170,7 +1172,7 @@ class BekendmakingenMapCard extends HTMLElement {
       ),
       el("h3", {}, a.title || a.friendly_name),
       this._badges(stateObj),
-      rows.length ? el("dl", {}, rows) : null,
+      // The buttons come before the fields, so they are in view without scrolling.
       el(
         "div",
         { class: "actions" },
@@ -1193,6 +1195,7 @@ class BekendmakingenMapCard extends HTMLElement {
             )
           : null,
       ),
+      rows.length ? el("dl", {}, rows) : null,
     );
   }
 
@@ -1336,11 +1339,7 @@ class BekendmakingenMapCard extends HTMLElement {
       return;
     }
     panel.hidden = false;
-    const scroll = panel.scrollTop;
     panel.replaceChildren(selected ? this._info(this._selectedId, true) : el("div", { class: "hint" }, this._strings.selectHint));
-    // Keep the position when the same publication is redrawn (e.g. after following it).
-    panel.scrollTop = panel.dataset.entity === this._selectedId ? scroll : 0;
-    panel.dataset.entity = this._selectedId || "";
   }
 
   /** A click on a row in the list. */

@@ -50,7 +50,7 @@ tiles: pdok              # pdok, pdok_grijs, pdok_luchtfoto, osm of een {z}/{x}/
 dark_mode: auto          # auto, light of dark
 show_list: true          # lijst onder de kaart
 list_sort: distance      # distance, first_seen, reaction_deadline of published
-list_height: 400         # hoogte van lijst en details in px; 0 = geen limiet
+list_height: 400         # hoogte van de lijst in px (die scrolt); 0 = geen limiet
 open_only: false         # alleen bekendmakingen waarop je nog kunt reageren
 tap_action: details      # details (naast de lijst), popup of more-info
 attributes:              # velden in de details, in deze volgorde

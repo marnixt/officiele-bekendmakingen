@@ -48,7 +48,7 @@ tiles: pdok              # pdok, pdok_grijs, pdok_luchtfoto, osm or a {z}/{x}/{y
 dark_mode: auto          # auto, light or dark
 show_list: true          # list below the map
 list_sort: distance      # distance, first_seen, reaction_deadline or published
-list_height: 400         # height of the list and details in px; 0 = no limit
+list_height: 400         # height of the list in px (it scrolls); 0 = no limit
 open_only: false         # only publications whose reaction period is still open
 tap_action: details      # details (next to the list), popup or more-info
 attributes:              # fields in the details, in this order
