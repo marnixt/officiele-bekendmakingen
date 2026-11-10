@@ -4,7 +4,12 @@ from datetime import date
 
 import pytest
 
-from custom_components.officiele_bekendmakingen.api import SruError, parse_response, wkt_centroid
+from custom_components.officiele_bekendmakingen.api import (
+    SruError,
+    location_centroid,
+    parse_response,
+    wkt_centroid,
+)
 
 RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
 <sru:searchRetrieveResponse
@@ -13,7 +18,7 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
     xmlns:sru="http://docs.oasis-open.org/ns/search-ws/sruResponse"
     xmlns:gzd="http://standaarden.overheid.nl/sru">
   <sru:version>2.0</sru:version>
-  <sru:numberOfRecords>2</sru:numberOfRecords>
+  <sru:numberOfRecords>3</sru:numberOfRecords>
   <sru:records>
     <sru:record><sru:recordData><gzd:gzd>
       <gzd:originalData><overheidwetgeving:meta>
@@ -47,6 +52,20 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
         </overheidwetgeving:owmskern>
       </overheidwetgeving:meta></gzd:originalData>
     </gzd:gzd></sru:recordData></sru:record>
+    <sru:record><sru:recordData><gzd:gzd>
+      <gzd:originalData><overheidwetgeving:meta>
+        <overheidwetgeving:owmskern>
+          <dcterms:identifier>gmb-2026-3</dcterms:identifier>
+        </overheidwetgeving:owmskern>
+        <overheidwetgeving:tpmeta>
+          <overheidwetgeving:gebiedsmarkering><overheidwetgeving:Adres>
+            <overheidwetgeving:locatiepunt>52.0923086326301 5.12452564906022</overheidwetgeving:locatiepunt>
+            <overheidwetgeving:locatiegebied>52.092309,5.1245256</overheidwetgeving:locatiegebied>
+            <overheidwetgeving:huisnummer>22</overheidwetgeving:huisnummer>
+          </overheidwetgeving:Adres></overheidwetgeving:gebiedsmarkering>
+        </overheidwetgeving:tpmeta>
+      </overheidwetgeving:meta></gzd:originalData>
+    </gzd:gzd></sru:recordData></sru:record>
   </sru:records>
 </sru:searchRetrieveResponse>
 """
@@ -55,7 +74,7 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
 def test_parse_response_full_record():
     total, items = parse_response(RESPONSE)
 
-    assert total == 2
+    assert total == 3
     item = items[0]
     assert item.identifier == "gmb-2026-1"
     assert item.rubriek == "omgevingsvergunning"
@@ -78,6 +97,20 @@ def test_parse_response_minimal_record():
     assert item.reaction_deadline is None
     assert item.abstract is None
     assert item.content_url is None
+
+
+def test_parse_response_lat_lon_point():
+    _, items = parse_response(RESPONSE)
+
+    assert items[2].locations == ((52.092309, 5.1245256),)
+
+
+def test_location_centroid_lat_lon_point():
+    assert location_centroid("52.092309,5.1245256") == (52.092309, 5.1245256)
+
+
+def test_location_centroid_wkt():
+    assert location_centroid("LINESTRING(5.0 51.0,5.2 51.2)") == pytest.approx((51.1, 5.1))
 
 
 def test_wkt_centroid_point_is_lat_lon():

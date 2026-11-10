@@ -17,7 +17,8 @@
   (`type=gemeente&type=provincie&type=waterschap&distance=<radius>`) to suggest authorities around a zone.
   Its `gemeentenaam`, `provincienaam` and `waterschapsnaam` match `dt.creator` exactly.
 - Useful fields per record: `dcterms:type` (rubriek), `overheidwetgeving:activiteit`,
-  `overheidwetgeving:datumEindeReactietermijn`, `overheidwetgeving:locatiegebied` (WGS84 WKT, "lon lat"),
+  `overheidwetgeving:datumEindeReactietermijn`, `overheidwetgeving:locatiegebied` (WGS84 WKT with "lon lat", or a bare "lat,lon" point, which is
+  the most common form and is used for addresses),
   `dcterms:abstract` (short description, not always present), `gzd:preferredUrl`, `gzd:url` (text as XML).
 
 ## Background

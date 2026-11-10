@@ -19,6 +19,8 @@ NS = {
 }
 
 _COORD_PAIR = re.compile(r"(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)")
+# A bare point as "lat,lon"; most publications with an address mark their location this way.
+_LAT_LON = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*")
 _TIMEOUT = aiohttp.ClientTimeout(total=30)
 
 
@@ -69,6 +71,13 @@ def wkt_centroid(wkt: str) -> tuple[float, float] | None:
     return lat, lon
 
 
+def location_centroid(value: str) -> tuple[float, float] | None:
+    """Return the (lat, lon) of a locatiegebied, given as WKT or as a bare "lat,lon" point."""
+    if match := _LAT_LON.fullmatch(value):
+        return float(match[1]), float(match[2])
+    return wkt_centroid(value)
+
+
 def _text(element: ET.Element, path: str) -> str | None:
     found = element.find(path, NS)
     if found is None or found.text is None:
@@ -87,7 +96,7 @@ def parse_record(record: ET.Element) -> Bekendmaking | None:
     locations = tuple(
         centroid
         for area in meta.iterfind(".//ow:locatiegebied", NS)
-        if area.text and (centroid := wkt_centroid(area.text))
+        if area.text and (centroid := location_centroid(area.text))
     )
     return Bekendmaking(
         identifier=identifier,
