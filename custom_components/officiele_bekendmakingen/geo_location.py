@@ -73,6 +73,9 @@ class PublicationEvent(CoordinatorEntity[BekendmakingenCoordinator], Geolocation
     _attr_source = DOMAIN
     _attr_unit_of_measurement = UnitOfLength.KILOMETERS
     _attr_translation_key = "publication"
+    # Long texts are not kept in the history: nobody looks back at them, and they would be
+    # stored again on every change (e.g. when a summary arrives or an address is followed).
+    _unrecorded_attributes = frozenset({"title", "address", "abstract", "summary", "url"})
 
     def __init__(
         self, coordinator: BekendmakingenCoordinator, unique_id: str, nearby: NearbyBekendmaking

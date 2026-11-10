@@ -83,6 +83,13 @@ def test_as_dict():
     }
 
 
+def test_long_texts_are_not_recorded():
+    # What Home Assistant hands to the recorder: the entity's own set plus the platform's.
+    unrecorded = PublicationEvent._Entity__combined_unrecorded_attributes
+    assert {"title", "address", "abstract", "summary", "url"} <= unrecorded
+    assert "followed" not in unrecorded
+
+
 def test_publication_event_takes_over_new_data():
     entity = PublicationEvent(MagicMock(), "entry_gmb-2026-1", NearbyBekendmaking(ITEM, 1, (51.57, 5.09)))
     entity.nearby = NearbyBekendmaking(replace(ITEM, title="Gewijzigd"), 2000.0, (51.58, 5.09))
