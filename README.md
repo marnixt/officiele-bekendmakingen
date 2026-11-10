@@ -48,9 +48,10 @@ tiles: pdok              # pdok, pdok_grijs, pdok_luchtfoto, osm or a {z}/{x}/{y
 dark_mode: auto          # auto, light or dark
 show_list: true          # list below the map
 list_sort: distance      # distance, first_seen, reaction_deadline or published
+list_height: 400         # height of the list and details in px; 0 = no limit
 open_only: false         # only publications whose reaction period is still open
-tap_action: popup        # popup or more-info
-attributes:              # popup fields, in this order
+tap_action: details      # details (next to the list), popup or more-info
+attributes:              # fields in the details, in this order
   - summary
   - impact
   - abstract
@@ -62,7 +63,7 @@ attributes:              # popup fields, in this order
   - first_seen
   - reaction_deadline
   - distance_m
-labels:                  # optional: own names for popup fields
+labels:                  # optional: own names for the fields
   reaction_deadline: Zienswijze tot
 include_rubrieken: []    # only these rubrieken
 exclude_rubrieken:
@@ -76,11 +77,17 @@ styles:                  # optional: colour and icon per rubriek or activity
 
 Every attribute of a publication entity can be used under `attributes`; dates, distance and
 the impact rating are formatted, the reaction deadline shows the number of days left.
-The popup has buttons to the publication, the standard details dialog, *Follow address* and
+The details have buttons to the publication, the standard details dialog, *Follow address* and
 *Hide*.
 
-### The list
-With `show_list: true` the card shows a list below the map. Each row shows the address (when
+### The list and details
+With `show_list: true` the card shows a list below the map with the details of the selected
+publication next to it (above it on a narrow card, such as on a phone). Clicking a marker
+selects that publication: it is highlighted on the map and in the list, the list scrolls to it
+and its details are shown. Clicking a row does the same and moves the map to it. Without a list,
+or with `tap_action: popup`, a marker opens a popup with the details instead.
+
+Each row shows the address (when
 the publication has one), the distance and when the integration fetched it ("fetched 3 hours
 ago"), plus badges:
 
@@ -125,7 +132,7 @@ With a cloud AI service, each summary is one paid request. As an indication: 100
 about 1 cent with gpt-6-luna.
 
 ## Following an address
-Use *Follow address* in the popup of the map card, or the actions
+Use *Follow address* in the details on the map card, or the actions
 `officiele_bekendmakingen.follow` and `officiele_bekendmakingen.unfollow` with the `identifier`
 of a publication within the radius:
 

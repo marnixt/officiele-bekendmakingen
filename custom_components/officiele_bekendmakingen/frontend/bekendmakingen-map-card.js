@@ -80,6 +80,8 @@ const LIST_FILTERS = ["new", "followed", "open", "hidden"];
 // A reaction deadline this many days away or closer is shown in orange, URGENT_DAYS in red.
 const SOON_DAYS = 6;
 const URGENT_DAYS = 2;
+// From this card width on, the details are shown to the right of the list instead of above it.
+const WIDE_WIDTH = 640;
 
 const DEFAULT_CONFIG = {
   height: 400,
@@ -93,7 +95,10 @@ const DEFAULT_CONFIG = {
   open_only: false,
   show_list: false,
   list_sort: "distance",
-  tap_action: "popup",
+  // Height of the list and of the details next to it; 0 lets the list grow with its rows.
+  list_height: 400,
+  // details: select in the list and show the details next to it (needs the list).
+  tap_action: "details",
 };
 
 const STRINGS = {
@@ -117,6 +122,8 @@ const STRINGS = {
     newCount: (n) => `${n} nieuw`,
     fetched: (when) => `opgehaald ${when}`,
     failed: "Dat is niet gelukt:",
+    selectHint: "Kies een bekendmaking in de lijst of op de kaart.",
+    close: "Sluiten",
     sorts: { distance: "Afstand", first_seen: "Nieuwste eerst", reaction_deadline: "Termijn", published: "Gepubliceerd" },
     filters: { new: "Nieuw", followed: "Gevolgd", open: "Termijn open", hidden: "Verborgen" },
     attributes: {
@@ -146,6 +153,7 @@ const STRINGS = {
       open_only: "Alleen met open reactietermijn",
       show_list: "Lijst onder de kaart",
       list_sort: "Lijst sorteren op",
+      list_height: "Hoogte lijst en details (0 = geen limiet)",
       tap_action: "Bij klikken op een marker",
     },
   },
@@ -169,6 +177,8 @@ const STRINGS = {
     newCount: (n) => `${n} new`,
     fetched: (when) => `fetched ${when}`,
     failed: "That did not work:",
+    selectHint: "Choose a publication in the list or on the map.",
+    close: "Close",
     sorts: { distance: "Distance", first_seen: "Newest first", reaction_deadline: "Deadline", published: "Published" },
     filters: { new: "New", followed: "Followed", open: "Open for reactions", hidden: "Hidden" },
     attributes: {
@@ -198,6 +208,7 @@ const STRINGS = {
       open_only: "Only with an open reaction period",
       show_list: "List below the map",
       list_sort: "Sort list by",
+      list_height: "Height of list and details (0 = no limit)",
       tap_action: "When a marker is clicked",
     },
   },
@@ -285,7 +296,7 @@ function saveUiState(ui) {
 
 const CSS = `
   :host { display: block; }
-  ha-card { overflow: hidden; }
+  ha-card { display: block; overflow: hidden; }
   .map {
     width: 100%;
     position: relative;
@@ -339,6 +350,12 @@ const CSS = `
     background: var(--bm-new-color);
     border: 2px solid #fff;
   }
+  .pin.selected {
+    transform: scale(1.25);
+    border-color: var(--primary-text-color);
+    box-shadow: 0 0 0 3px var(--card-background-color), 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+  .pin.selected.followed { box-shadow: 0 0 0 3px var(--bm-followed-color), 0 2px 8px rgba(0, 0, 0, 0.6); }
   .pin.zone { background: var(--primary-color); width: 26px; height: 26px; --mdc-icon-size: 15px; }
   .radius { stroke: var(--primary-color); fill: var(--primary-color); }
   .leaflet-popup-content-wrapper, .leaflet-popup-tip {
@@ -349,7 +366,7 @@ const CSS = `
   .leaflet-popup-content-wrapper { border-radius: 12px; }
   .leaflet-popup-content { margin: 12px 14px; line-height: 1.4; font-size: 14px; }
   .leaflet-container a.leaflet-popup-close-button { color: var(--secondary-text-color); }
-  .popup .chip {
+  .info .chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -359,20 +376,20 @@ const CSS = `
     --mdc-icon-size: 16px;
     padding-right: 16px;
   }
-  .popup h3 { margin: 4px 0 8px; font-size: 15px; line-height: 1.3; font-weight: 600; }
-  .popup .badges { margin: -2px 0 8px; }
-  .popup dl {
+  .info h3 { margin: 4px 0 8px; font-size: 15px; line-height: 1.3; font-weight: 600; }
+  .info .badges { margin: -2px 0 8px; }
+  .info dl {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 3px 10px;
     margin: 0;
     font-size: 13px;
   }
-  .popup dt { color: var(--secondary-text-color); }
-  .popup dd { margin: 0; overflow-wrap: anywhere; }
-  .popup .block { grid-column: 1 / -1; }
-  .popup dd.block { margin-bottom: 6px; }
-  .popup .impact {
+  .info dt { color: var(--secondary-text-color); }
+  .info dd { margin: 0; overflow-wrap: anywhere; }
+  .info .block { grid-column: 1 / -1; }
+  .info dd.block { margin-bottom: 6px; }
+  .info .impact {
     display: inline-block;
     padding: 0 6px;
     border-radius: 8px;
@@ -382,8 +399,8 @@ const CSS = `
   .impact.low { background: #2e7d32; }
   .impact.medium { background: #e8710a; }
   .impact.high { background: #c62828; }
-  .popup .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .popup .actions a, .popup .actions button {
+  .info .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .info .actions a, .info .actions button {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -396,13 +413,13 @@ const CSS = `
     text-decoration: none;
     --mdc-icon-size: 16px;
   }
-  .popup .actions a { background: var(--primary-color); color: var(--text-primary-color, #fff); }
-  .popup .actions button {
+  .info .actions a { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .info .actions button {
     background: none;
     border: 1px solid var(--divider-color);
     color: var(--primary-text-color);
   }
-  .popup .actions button.on { border-color: var(--bm-followed-color); }
+  .info .actions button.on { border-color: var(--bm-followed-color); }
   .badges { display: flex; flex-wrap: wrap; gap: 4px; }
   .badge {
     display: inline-flex;
@@ -469,8 +486,38 @@ const CSS = `
   .list .text { min-width: 0; flex: 1; }
   .list .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .list .row.new .title { font-weight: 600; }
+  .list .row.selected {
+    background: var(--secondary-background-color);
+    box-shadow: inset 3px 0 var(--primary-color);
+  }
   .list .badges { margin: 2px 0; }
   .list .meta { font-size: 12px; color: var(--secondary-text-color); }
+  /* List and details: side by side on a wide card, details above the list on a narrow one. */
+  .panes { display: flex; flex-direction: column; border-top: 1px solid var(--divider-color); }
+  .wide .panes { flex-direction: row; }
+  .rows, .details { min-width: 0; overflow-y: auto; max-height: var(--list-height, none); }
+  .rows { position: relative; flex: 1; padding: 4px 0; }
+  .details { order: -1; padding: 12px 16px; border-bottom: 1px solid var(--divider-color); }
+  .details[hidden] { display: none; }
+  .wide .details {
+    order: 0;
+    flex: 1;
+    border-bottom: none;
+    border-left: 1px solid var(--divider-color);
+  }
+  .details .hint { color: var(--secondary-text-color); padding: 8px 0; }
+  .details .head { display: flex; align-items: flex-start; gap: 8px; }
+  .details .head .chip { flex: 1; }
+  .details .close {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    padding: 0;
+    --mdc-icon-size: 20px;
+  }
+  .details h3 { font-size: 17px; }
+  .details dl { font-size: 14px; }
 `;
 
 class BekendmakingenMapCard extends HTMLElement {
@@ -528,7 +575,8 @@ class BekendmakingenMapCard extends HTMLElement {
             { name: "open_only", selector: { boolean: {} } },
             { name: "show_list", selector: { boolean: {} } },
             { name: "list_sort", selector: select([...LIST_SORTS, "published"].map((v) => ({ value: v, label: s.sorts[v] }))) },
-            { name: "tap_action", selector: select(["popup", "more-info"]) },
+            { name: "list_height", selector: { number: { min: 0, max: 2000, step: 10, mode: "box", unit_of_measurement: "px" } } },
+            { name: "tap_action", selector: select(["details", "popup", "more-info"]) },
           ],
         },
       ],
@@ -664,6 +712,8 @@ class BekendmakingenMapCard extends HTMLElement {
     if (hidden[this._id(stateObj)]) delete hidden[this._id(stateObj)];
     else hidden[this._id(stateObj)] = new Date().toISOString();
     this._map?.closePopup();
+    // It drops out of the list (or back in), so it is no longer the selected one.
+    if (this._selectedId === stateObj.entity_id) this._selectedId = null;
     this._saveUser({ ...this._user, hidden });
   }
 
@@ -692,11 +742,31 @@ class BekendmakingenMapCard extends HTMLElement {
       css.onerror = resolve;
     });
     this._mapEl = el("div", { class: "map", style: `height: ${Number(this._config.height)}px` });
-    this._listEl = el("div", { class: "list" });
+    // The containers stay, so the list keeps its scroll position when its rows are redrawn.
+    this._toolbarEl = el("div", { class: "toolbar" });
+    this._rowsEl = el("div", { class: "rows" });
+    this._detailsEl = el("div", { class: "details" });
+    const listHeight = Number(this._config.list_height);
+    this._listEl = el(
+      "div",
+      { class: "list", style: listHeight > 0 ? `--list-height: ${listHeight}px` : "" },
+      this._toolbarEl,
+      el("div", { class: "panes" }, this._rowsEl, this._detailsEl),
+    );
     this._card = el("ha-card", { style: "--bm-new-color: #d32f2f; --bm-followed-color: #f9a825" }, this._mapEl, this._listEl);
     if (this._config.title) this._card.header = this._config.title;
     root.append(el("style", {}, CSS), css, this._card);
-    this._resizeObserver = new ResizeObserver(() => this._map?.invalidateSize());
+    this._selectedId = null;
+    this._wide = false;
+    this._resizeObserver = new ResizeObserver(() => {
+      this._map?.invalidateSize();
+      const wide = this.getBoundingClientRect().width >= WIDE_WIDTH;
+      if (wide !== this._wide) {
+        this._wide = wide;
+        this._card.classList.toggle("wide", wide);
+        this._renderDetails();
+      }
+    });
     if (this.isConnected) {
       this._resizeObserver.observe(this._mapEl);
       this._initMap();
@@ -830,10 +900,49 @@ class BekendmakingenMapCard extends HTMLElement {
   }
 
   /** The pin of a publication, with a ring when followed and a dot when new. */
-  _publicationPin(stateObj) {
-    const pin = this._pin(this._style(stateObj), stateObj.attributes.followed ? "followed" : "");
+  _publicationPin(stateObj, onMap = false) {
+    const classes = [stateObj.attributes.followed ? "followed" : "", onMap && stateObj.entity_id === this._selectedId ? "selected" : ""];
+    const pin = this._pin(this._style(stateObj), classes.join(" "));
     if (this._isNew(stateObj)) pin.append(el("span", { class: "dot" }));
     return pin;
+  }
+
+  /** What a click on a marker does: select it next to the list, a popup or the details dialog. */
+  get _mode() {
+    const action = this._config.tap_action;
+    if (action === "more-info") return action;
+    return action === "details" && this._config.show_list ? "details" : "popup";
+  }
+
+  /**
+   * Select a publication: highlight it in the list and on the map and show its details.
+   * From the map the list scrolls to it; from the list the map pans to it.
+   */
+  _selectPublication(entityId, from) {
+    this._selectedId = entityId;
+    this._markViewed(entityId);
+    this._refresh();
+    if (from === "map") {
+      if (this._wide) this._scrollToRow(entityId);
+      else this._detailsEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      const marker = this._markers.get(entityId);
+      if (marker) this._map.setView(marker.getLatLng(), Math.max(this._map.getZoom(), 16));
+    }
+  }
+
+  /** Scroll the list (not the page) so that the row of a publication is in view. */
+  _scrollToRow(entityId) {
+    const row = [...this._rowsEl.children].find((r) => r.dataset.entity === entityId);
+    if (!row) return;
+    const box = this._rowsEl;
+    if (box.scrollHeight <= box.clientHeight) return; // the list does not scroll by itself
+    const top = row.offsetTop; // .rows is the offset parent
+    // Directly, not smooth: a redraw during the animation would stop it halfway.
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (top + row.offsetHeight > box.scrollTop + box.clientHeight) {
+      box.scrollTop = top + row.offsetHeight - box.clientHeight;
+    }
   }
 
   /** Force a re-render, e.g. after the user data or the list choices changed. */
@@ -871,20 +980,27 @@ class BekendmakingenMapCard extends HTMLElement {
       }
     }
 
+    // A selection that dropped out (filtered, hidden or gone) is cleared.
+    if (!publications.some((s) => s.entity_id === this._selectedId)) this._selectedId = null;
+    const mode = this._mode;
     for (const stateObj of publications) {
-      const icon = L.divIcon({ html: this._publicationPin(stateObj), className: "", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] });
+      const icon = L.divIcon({ html: this._publicationPin(stateObj, true), className: "", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] });
+      const selected = stateObj.entity_id === this._selectedId;
       const marker = L.marker([stateObj.attributes.latitude, stateObj.attributes.longitude], {
         icon,
         entityId: stateObj.entity_id,
         title: stateObj.attributes.friendly_name,
         riseOnHover: true,
-        // Followed publications stay on top of their neighbours.
-        zIndexOffset: stateObj.attributes.followed ? 1000 : 0,
+        // The selected publication, then followed ones, stay on top of their neighbours.
+        zIndexOffset: selected ? 2000 : stateObj.attributes.followed ? 1000 : 0,
       });
-      if (this._config.tap_action === "more-info") {
+      if (mode === "more-info") {
         marker.on("click", () => this._moreInfo(stateObj.entity_id));
+      } else if (mode === "details") {
+        // Selecting redraws the markers, which must not happen inside Leaflet's own click.
+        marker.on("click", () => setTimeout(() => this._selectPublication(stateObj.entity_id, "map")));
       } else {
-        marker.bindPopup(() => this._popup(stateObj.entity_id), {
+        marker.bindPopup(() => this._info(stateObj.entity_id), {
           maxWidth: 320,
           minWidth: 220,
           maxHeight: Math.max(150, Number(this._config.height) - 70),
@@ -1023,7 +1139,8 @@ class BekendmakingenMapCard extends HTMLElement {
     return badges.length ? el("div", { class: "badges" }, badges) : null;
   }
 
-  _popup(entityId) {
+  /** The details of a publication, for the panel next to the list (closable) or a popup. */
+  _info(entityId, closable = false) {
     const stateObj = this._hass.states[entityId];
     if (!stateObj) return "";
     const a = stateObj.attributes;
@@ -1042,8 +1159,15 @@ class BekendmakingenMapCard extends HTMLElement {
     }
     return el(
       "div",
-      { class: "popup", style: `--pin-color: ${style.color}` },
-      a.rubriek ? el("div", { class: "chip" }, el("ha-icon", { icon: style.icon }), a.rubriek) : null,
+      { class: "info", style: `--pin-color: ${style.color}` },
+      el(
+        "div",
+        { class: "head" },
+        el("div", { class: "chip" }, a.rubriek ? [el("ha-icon", { icon: style.icon }), a.rubriek] : null),
+        closable
+          ? el("button", { class: "close", title: s.close, onclick: () => this._selectPublication(null) }, el("ha-icon", { icon: "mdi:close" }))
+          : null,
+      ),
       el("h3", {}, a.title || a.friendly_name),
       this._badges(stateObj),
       rows.length ? el("dl", {}, rows) : null,
@@ -1160,20 +1284,21 @@ class BekendmakingenMapCard extends HTMLElement {
   _renderList() {
     if (!this._listEl || !this._hass || !this._all) return;
     if (!this._config.show_list) {
-      this._listEl.replaceChildren();
       this._listEl.hidden = true;
       return;
     }
     this._listEl.hidden = false;
     const s = this._strings;
-    const toolbar = this._toolbar();
+    this._toolbarEl.replaceWith((this._toolbarEl = this._toolbar()));
+    this._renderDetails();
     if (!this._visible.length) {
       const message = (this._all || []).length ? s.noneFiltered : s.none;
-      this._listEl.replaceChildren(toolbar, el("div", { class: "message" }, message));
+      this._rowsEl.replaceChildren(el("div", { class: "message" }, message));
       return;
     }
-    this._listEl.replaceChildren(
-      toolbar,
+    // Emptying the list resets its scroll position; put it back after redrawing the rows.
+    const scroll = this._rowsEl.scrollTop;
+    this._rowsEl.replaceChildren(
       ...this._sorted(this._visible).map((stateObj) => {
         const a = stateObj.attributes;
         const fetched = this._relative(a.first_seen);
@@ -1182,9 +1307,10 @@ class BekendmakingenMapCard extends HTMLElement {
           this._value(stateObj, "distance_m"),
           fetched ? el("span", { title: this._exact(a.first_seen) }, s.fetched(fetched)) : null,
         ].filter(Boolean);
+        const classes = ["row", this._isNew(stateObj) ? "new" : "", stateObj.entity_id === this._selectedId ? "selected" : ""];
         return el(
           "div",
-          { class: `row ${this._isNew(stateObj) ? "new" : ""}`, onclick: () => this._select(stateObj.entity_id) },
+          { class: classes.join(" "), "data-entity": stateObj.entity_id, onclick: () => this._select(stateObj.entity_id) },
           this._publicationPin(stateObj),
           el(
             "div",
@@ -1196,11 +1322,36 @@ class BekendmakingenMapCard extends HTMLElement {
         );
       }),
     );
+    this._rowsEl.scrollTop = scroll;
   }
 
+  /** The panel next to the list: the selected publication, or a hint on a wide card. */
+  _renderDetails() {
+    const panel = this._detailsEl;
+    if (!panel) return;
+    const selected = this._selectedId && this._hass?.states[this._selectedId];
+    if (this._mode !== "details" || (!selected && !this._wide)) {
+      panel.hidden = true;
+      panel.replaceChildren();
+      return;
+    }
+    panel.hidden = false;
+    const scroll = panel.scrollTop;
+    panel.replaceChildren(selected ? this._info(this._selectedId, true) : el("div", { class: "hint" }, this._strings.selectHint));
+    // Keep the position when the same publication is redrawn (e.g. after following it).
+    panel.scrollTop = panel.dataset.entity === this._selectedId ? scroll : 0;
+    panel.dataset.entity = this._selectedId || "";
+  }
+
+  /** A click on a row in the list. */
   _select(entityId) {
-    if (this._config.tap_action === "more-info") {
+    const mode = this._mode;
+    if (mode === "more-info") {
       this._moreInfo(entityId);
+      return;
+    }
+    if (mode === "details") {
+      this._selectPublication(entityId, "list");
       return;
     }
     const marker = this._markers.get(entityId);
@@ -1217,7 +1368,7 @@ if (!customElements.get(TAG)) {
   window.customCards.push({
     type: TAG,
     name: "Bekendmakingen kaart",
-    description: "Officiële bekendmakingen op de kaart, met icoon per rubriek en een popup met details.",
+    description: "Officiële bekendmakingen op de kaart, met icoon per rubriek, een lijst en details.",
     documentationURL: "https://github.com/marnixt/officiele-bekendmakingen",
   });
 }

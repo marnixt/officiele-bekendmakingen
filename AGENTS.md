@@ -53,6 +53,9 @@
   The integration stores first seen as a timestamp (`first_seen`) and followed addresses in a third
   `Store` per entry (`follow.py`; postcode + house number, else within `FOLLOW_DISTANCE`), with
   services `follow`/`unfollow` by `identifier` and `followed` in attributes and the event.
+  Addresses come from `Adres` elements and from `geometrielabel` texts like "Straat 1, 1234AB Plaats".
+  With the list on, `tap_action: details` (default) replaces the popup: a marker or row selects the
+  publication and its details show next to the list (above it when the card is narrower than 640 px).
 - Next: filters on rubriek/activiteit in the integration itself.
 
 ## Conventions

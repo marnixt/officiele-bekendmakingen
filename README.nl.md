@@ -50,9 +50,10 @@ tiles: pdok              # pdok, pdok_grijs, pdok_luchtfoto, osm of een {z}/{x}/
 dark_mode: auto          # auto, light of dark
 show_list: true          # lijst onder de kaart
 list_sort: distance      # distance, first_seen, reaction_deadline of published
+list_height: 400         # hoogte van lijst en details in px; 0 = geen limiet
 open_only: false         # alleen bekendmakingen waarop je nog kunt reageren
-tap_action: popup        # popup of more-info
-attributes:              # velden in de popup, in deze volgorde
+tap_action: details      # details (naast de lijst), popup of more-info
+attributes:              # velden in de details, in deze volgorde
   - summary
   - impact
   - abstract
@@ -64,7 +65,7 @@ attributes:              # velden in de popup, in deze volgorde
   - first_seen
   - reaction_deadline
   - distance_m
-labels:                  # optioneel: eigen namen voor velden in de popup
+labels:                  # optioneel: eigen namen voor de velden
   reaction_deadline: Zienswijze tot
 include_rubrieken: []    # alleen deze rubrieken
 exclude_rubrieken:
@@ -77,12 +78,19 @@ styles:                  # optioneel: kleur en icoon per rubriek of activiteit
 ```
 
 Elk attribuut van een bekendmaking kan onder `attributes`; datums, afstand en impact worden
-netjes weergegeven, en bij de reactietermijn staat hoeveel dagen je nog hebt. De popup heeft
+netjes weergegeven, en bij de reactietermijn staat hoeveel dagen je nog hebt. De details hebben
 knoppen naar de bekendmaking en het standaard detailvenster, en de knoppen *Adres volgen* en
 *Verbergen*.
 
-### De lijst
-Met `show_list: true` staat er een lijst onder de kaart. Elke regel toont het adres (als de
+### De lijst en details
+Met `show_list: true` staat er een lijst onder de kaart, met daarnaast de details van de
+gekozen bekendmaking (op een smalle kaart, zoals op een telefoon, erboven). Klik je op een
+marker, dan wordt die bekendmaking gekozen: hij wordt gemarkeerd op de kaart en in de lijst, de
+lijst scrolt ernaartoe en de details verschijnen. Een klik op een regel doet hetzelfde en
+verschuift de kaart ernaartoe. Zonder lijst, of met `tap_action: popup`, opent een marker een
+popup met de details.
+
+Elke regel toont het adres (als de
 bekendmaking er een heeft), de afstand en wanneer de integratie hem ophaalde ("opgehaald 3 uur
 geleden"), plus badges:
 
@@ -130,7 +138,7 @@ Bij een AI-dienst in de cloud is elke samenvatting één betaalde aanvraag. Ter 
 samenvattingen kosten ongeveer 1 cent met gpt-6-luna.
 
 ## Een adres volgen
-Gebruik *Adres volgen* in de popup van de kaart, of de acties `officiele_bekendmakingen.follow`
+Gebruik *Adres volgen* in de details op de kaart, of de acties `officiele_bekendmakingen.follow`
 en `officiele_bekendmakingen.unfollow` met de `identifier` van een bekendmaking binnen de straal:
 
 ```yaml
