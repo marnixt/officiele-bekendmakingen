@@ -21,6 +21,12 @@ NS = {
 _COORD_PAIR = re.compile(r"(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)")
 # A bare point as "lat,lon"; most publications with an address mark their location this way.
 _LAT_LON = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*")
+# An address in a geometrielabel, e.g. "F. Koolhovenstraat 54C, 3555VK Utrecht". Some
+# authorities (e.g. Tilburg) only give the address this way, as the label of a marked area.
+_ADDRESS_LABEL = re.compile(
+    r"\s*(?P<street>\D.*?)\s+(?P<number>\d+(?:\s*[-/]?\s*[A-Za-z0-9]{1,4})?)\s*,"
+    r"\s*(?P<postcode>\d{4}\s?[A-Z]{2})\s+(?P<city>.+?)\s*"
+)
 _TIMEOUT = aiohttp.ClientTimeout(total=30)
 
 
@@ -42,7 +48,8 @@ class Address:
         """(postcode, house number) in a normalised form, if both are known."""
         if not self.postcode or not self.number:
             return None
-        return self.postcode.replace(" ", "").upper(), self.number.strip().lower()
+        # "16 c", "16-C" and "16c" are the same house number.
+        return self.postcode.replace(" ", "").upper(), re.sub(r"[\s-]", "", self.number).lower()
 
     @property
     def label(self) -> str | None:
@@ -108,6 +115,35 @@ def location_centroid(value: str) -> tuple[float, float] | None:
     return wkt_centroid(value)
 
 
+def parse_address_label(label: str) -> Address | None:
+    """Return the address in a geometrielabel, if it is one."""
+    if match := _ADDRESS_LABEL.fullmatch(label):
+        return Address(match["street"], match["number"], match["postcode"], match["city"])
+    return None
+
+
+def _addresses(meta: ET.Element) -> tuple[Address, ...]:
+    """Return the addresses of a record: Adres elements first, then address labels."""
+    found = [
+        Address(
+            street=_text(adres, "ow:straatnaam"),
+            number=_text(adres, "ow:huisnummer"),
+            postcode=_text(adres, "ow:postcode"),
+            city=_text(adres, "ow:woonplaats"),
+        )
+        for adres in meta.iterfind(".//ow:Adres", NS)
+    ]
+    found += [
+        address
+        for label in meta.iterfind(".//ow:geometrielabel", NS)
+        if label.text and (address := parse_address_label(label.text))
+    ]
+    unique: dict[object, Address] = {}
+    for address in found:
+        unique.setdefault(address.key or address, address)
+    return tuple(unique.values())
+
+
 def _text(element: ET.Element, path: str) -> str | None:
     found = element.find(path, NS)
     if found is None or found.text is None:
@@ -140,15 +176,7 @@ def parse_record(record: ET.Element) -> Bekendmaking | None:
         locations=locations,
         abstract=_text(meta, "ow:owmsmantel/dcterms:abstract"),
         content_url=_text(record, ".//gzd:enrichedData/gzd:url"),
-        addresses=tuple(
-            Address(
-                street=_text(adres, "ow:straatnaam"),
-                number=_text(adres, "ow:huisnummer"),
-                postcode=_text(adres, "ow:postcode"),
-                city=_text(adres, "ow:woonplaats"),
-            )
-            for adres in meta.iterfind(".//ow:Adres", NS)
-        ),
+        addresses=_addresses(meta),
     )
 
 

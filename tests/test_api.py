@@ -8,6 +8,7 @@ from custom_components.officiele_bekendmakingen.api import (
     Address,
     SruError,
     location_centroid,
+    parse_address_label,
     parse_response,
     wkt_centroid,
 )
@@ -38,6 +39,7 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
           <overheidwetgeving:datumEindeReactietermijn>2026-12-02</overheidwetgeving:datumEindeReactietermijn>
           <overheidwetgeving:gebiedsmarkering><overheidwetgeving:Vlak>
             <overheidwetgeving:locatiegebied>POLYGON((5.0 51.0,5.2 51.0,5.2 51.2,5.0 51.2))</overheidwetgeving:locatiegebied>
+            <overheidwetgeving:geometrielabel>Gebiedsmarkering</overheidwetgeving:geometrielabel>
           </overheidwetgeving:Vlak></overheidwetgeving:gebiedsmarkering>
         </overheidwetgeving:tpmeta>
       </overheidwetgeving:meta></gzd:originalData>
@@ -67,6 +69,14 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
             <overheidwetgeving:straatnaam>Kromme Nieuwegracht</overheidwetgeving:straatnaam>
             <overheidwetgeving:woonplaats>Utrecht</overheidwetgeving:woonplaats>
           </overheidwetgeving:Adres></overheidwetgeving:gebiedsmarkering>
+          <overheidwetgeving:gebiedsmarkering><overheidwetgeving:Vlak>
+            <overheidwetgeving:locatiegebied>POLYGON((5.1 52.1,5.2 52.1,5.2 52.2))</overheidwetgeving:locatiegebied>
+            <overheidwetgeving:geometrielabel>Kromme Nieuwegracht 22, 3512HH Utrecht</overheidwetgeving:geometrielabel>
+          </overheidwetgeving:Vlak></overheidwetgeving:gebiedsmarkering>
+          <overheidwetgeving:gebiedsmarkering><overheidwetgeving:Vlak>
+            <overheidwetgeving:locatiegebied>POLYGON((5.1 52.1,5.2 52.1,5.2 52.2))</overheidwetgeving:locatiegebied>
+            <overheidwetgeving:geometrielabel>F. Koolhovenstraat 54C, 3555VK Utrecht</overheidwetgeving:geometrielabel>
+          </overheidwetgeving:Vlak></overheidwetgeving:gebiedsmarkering>
         </overheidwetgeving:tpmeta>
       </overheidwetgeving:meta></gzd:originalData>
     </gzd:gzd></sru:recordData></sru:record>
@@ -106,20 +116,40 @@ def test_parse_response_minimal_record():
 def test_parse_response_lat_lon_point():
     _, items = parse_response(RESPONSE)
 
-    assert items[2].locations == ((52.092309, 5.1245256),)
+    assert items[2].locations[0] == (52.092309, 5.1245256)
 
 
 def test_parse_response_address():
     _, items = parse_response(RESPONSE)
 
-    assert items[2].addresses == (Address("Kromme Nieuwegracht", "22", "3512HH", "Utrecht"),)
+    # The Adres element first; the label with the same address is not added twice.
+    assert items[2].addresses == (
+        Address("Kromme Nieuwegracht", "22", "3512HH", "Utrecht"),
+        Address("F. Koolhovenstraat", "54C", "3555VK", "Utrecht"),
+    )
     assert items[2].address == "Kromme Nieuwegracht 22, Utrecht"
     assert items[0].addresses == ()
     assert items[0].address is None
 
 
+@pytest.mark.parametrize(
+    ("label", "expected"),
+    [
+        ("Diederikdreef 28, 5046GT Tilburg", Address("Diederikdreef", "28", "5046GT", "Tilburg")),
+        ("H.F. van Riellaan 5A, 3571WB Utrecht", Address("H.F. van Riellaan", "5A", "3571WB", "Utrecht")),
+        ("Goirkestraat 16 c, 5046 GK Tilburg", Address("Goirkestraat", "16 c", "5046 GK", "Tilburg")),
+        ("Gebiedsmarkering", None),
+        ("Hoogoorddreef, Amsterdam", None),
+        ("Perceel Wanroij (WRJ00) L 229", None),
+    ],
+)
+def test_parse_address_label(label, expected):
+    assert parse_address_label(label) == expected
+
+
 def test_address_key_is_normalised():
     assert Address(None, " 16C ", "5046 gk", None).key == ("5046GK", "16c")
+    assert Address(None, "16 c", "5046GK", None).key == Address(None, "16-C", "5046GK", None).key
     assert Address("Straat", "1", None, None).key is None
 
 
