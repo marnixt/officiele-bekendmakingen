@@ -44,7 +44,7 @@ def test_publication_event():
     nearby = NearbyBekendmaking(ITEM, 1234.4, (51.57, 5.09))
     coordinator = MagicMock()
     coordinator.config_entry.data = {"zone": "zone.home"}
-    coordinator.summary.return_value = {"summary": "Er wordt een boom gekapt.", "impact": "low"}
+    coordinator.attributes.return_value = {"title": ITEM.title, "followed": True}
     entity = PublicationEvent(coordinator, "entry_gmb-2026-1", nearby)
 
     assert entity.unique_id == "entry_gmb-2026-1"
@@ -55,6 +55,19 @@ def test_publication_event():
     assert entity.distance == pytest.approx(1.2344)
     assert entity.extra_state_attributes == {
         "title": ITEM.title,
+        "followed": True,
+        "zone": "zone.home",
+    }
+    coordinator.attributes.assert_called_with(nearby)
+
+
+def test_as_dict():
+    nearby = NearbyBekendmaking(ITEM, 1234.4, (51.57, 5.09))
+    summary = {"summary": "Er wordt een boom gekapt.", "impact": "low"}
+    assert nearby.as_dict(summary, "2026-10-24T09:00:00+02:00", True) == {
+        "identifier": "gmb-2026-1",
+        "title": ITEM.title,
+        "address": None,
         "rubriek": "omgevingsvergunning",
         "activiteit": "kappen",
         "abstract": None,
@@ -65,9 +78,9 @@ def test_publication_event():
         "url": ITEM.url,
         "summary": "Er wordt een boom gekapt.",
         "impact": "low",
-        "zone": "zone.home",
+        "first_seen": "2026-10-24T09:00:00+02:00",
+        "followed": True,
     }
-    coordinator.summary.assert_called_with("gmb-2026-1")
 
 
 def test_publication_event_takes_over_new_data():

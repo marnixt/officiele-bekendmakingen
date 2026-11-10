@@ -6,7 +6,7 @@ near your home, using the public SRU search service of
 
 *Nederlands: zie [README.nl.md](https://github.com/marnixt/officiele-bekendmakingen/blob/main/README.nl.md).*
 
-> Status: early development (0.4.3).
+> Status: early development (0.5.0).
 
 ## Features
 - Choose a zone (home or any other zone), a radius around it and how many days to look back.
@@ -21,7 +21,9 @@ near your home, using the public SRU search service of
   for felling). Entities appear and disappear as publications come and go.
 - **Map card** `custom:bekendmakingen-map-card`, loaded automatically: coloured markers per
   rubriek, a popup with the fields you choose, an optional list below the map and Dutch
-  background maps from PDOK (Kadaster).
+  background maps from PDOK (Kadaster). New publications get a *New* badge until you open them.
+- **Follow an address**: mark the address of a publication, and that publication and every
+  later one at the same address get a *Followed* badge and `followed: true`.
 - **AI summaries** (optional): pick an [AI task](https://www.home-assistant.io/integrations/ai_task/)
   entity in the options and every publication within the radius gets a short summary and an
   impact rating (low/medium/high).
@@ -45,17 +47,19 @@ height: 400
 tiles: pdok              # pdok, pdok_grijs, pdok_luchtfoto, osm or a {z}/{x}/{y} URL template
 dark_mode: auto          # auto, light or dark
 show_list: true          # list below the map
-list_sort: distance      # distance, reaction_deadline or published
+list_sort: distance      # distance, first_seen, reaction_deadline or published
 open_only: false         # only publications whose reaction period is still open
 tap_action: popup        # popup or more-info
 attributes:              # popup fields, in this order
   - summary
   - impact
   - abstract
+  - address
   - rubriek
   - activiteit
   - authority
   - published
+  - first_seen
   - reaction_deadline
   - distance_m
 labels:                  # optional: own names for popup fields
@@ -72,7 +76,28 @@ styles:                  # optional: colour and icon per rubriek or activity
 
 Every attribute of a publication entity can be used under `attributes`; dates, distance and
 the impact rating are formatted, the reaction deadline shows the number of days left.
-The popup has a button to the publication and one to the standard details dialog.
+The popup has buttons to the publication, the standard details dialog, *Follow address* and
+*Hide*.
+
+### The list
+With `show_list: true` the card shows a list below the map. Each row shows the address (when
+the publication has one), the distance and when the integration fetched it ("fetched 3 hours
+ago"), plus badges:
+
+- **New**: fetched since you last looked. The badge disappears once you open the publication;
+  *Mark all read* clears all of them. The first time you use the card, the publications already
+  there count as read.
+- **Followed**: about an address you follow. Followed publications are always at the top of the
+  list and have a yellow ring on the map.
+- **Days left** to react, orange when 6 days or fewer are left and red at 2 days or fewer.
+
+Above the list you can sort by *Distance*, *Newest first* (most recently fetched first) or
+*Deadline* (open reaction periods first, soonest first), and filter on *New*, *Followed* and
+*Open for reactions*. Filters apply to the map as well. Hidden publications only show up with
+the *Hidden* filter, where you can show them again.
+
+What you have viewed or hidden is stored per Home Assistant user, so it is the same on all your
+devices. The chosen sort order and filters are remembered per browser.
 
 The standard map card also works, but shows the first letters of each title on the markers:
 
@@ -99,10 +124,27 @@ AI task entity to appear.
 With a cloud AI service, each summary is one paid request. As an indication: 100 summaries cost
 about 1 cent with gpt-6-luna.
 
+## Following an address
+Use *Follow address* in the popup of the map card, or the actions
+`officiele_bekendmakingen.follow` and `officiele_bekendmakingen.unfollow` with the `identifier`
+of a publication within the radius:
+
+```yaml
+action: officiele_bekendmakingen.follow
+data:
+  identifier: gmb-2026-123456
+```
+
+A later publication is about the same address when both have the same postcode and house
+number. When either has no address (many publications only mark an area), it counts when one
+of its locations lies within 25 m of the followed one. Unfollowing a publication stops following
+its address. Followed addresses are stored per zone.
+
 ## Notification on new publications
-The event data contains `title`, `rubriek`, `activiteit`, `abstract`, `authority`, `published`,
-`reaction_deadline`, `distance_m`, `url`, `summary`, `impact`, `identifier`, `zone` and
-`entry_id`. `summary` and `impact` are empty when AI summaries are off.
+The event data contains `title`, `address`, `rubriek`, `activiteit`, `abstract`, `authority`,
+`published`, `first_seen`, `reaction_deadline`, `distance_m`, `url`, `summary`, `impact`,
+`followed`, `identifier`, `zone` and `entry_id`. `summary` and `impact` are empty when AI
+summaries are off.
 
 ```yaml
 triggers:
@@ -115,6 +157,14 @@ actions:
       message: "{{ trigger.event.data.summary or trigger.event.data.title }}"
       data:
         url: "{{ trigger.event.data.url }}"
+```
+
+Only for followed addresses: add a condition.
+
+```yaml
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.followed }}"
 ```
 
 ## Installation

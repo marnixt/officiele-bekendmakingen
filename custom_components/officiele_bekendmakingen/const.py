@@ -35,6 +35,13 @@ EVENT_NEW_PUBLICATION = f"{DOMAIN}_new_publication"
 SEEN_RETENTION = timedelta(days=365)
 STORAGE_VERSION = 1
 
+# Followed addresses: a publication without a matching postcode and house number is about
+# a followed address when one of its locations lies within this distance of it.
+FOLLOW_DISTANCE = 25  # metres
+SERVICE_FOLLOW = "follow"
+SERVICE_UNFOLLOW = "unfollow"
+ATTR_IDENTIFIER = "identifier"
+
 # AI summaries: generated with ai_task.generate_data from the publication text.
 # Older publications without a summary are caught up a few at a time, closest first.
 MAX_SUMMARIES_PER_UPDATE = 10

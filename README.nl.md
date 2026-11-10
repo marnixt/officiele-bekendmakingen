@@ -6,7 +6,7 @@ bomenkap, …) bij jou in de buurt, via de openbare SRU-zoekdienst van
 
 *English: see [README.md](https://github.com/marnixt/officiele-bekendmakingen/blob/main/README.md).*
 
-> Status: vroege ontwikkeling (0.4.3).
+> Status: vroege ontwikkeling (0.5.0).
 
 ## Functies
 - Kies een zone (thuis of een andere zone), een straal eromheen en hoeveel dagen je terug wilt
@@ -22,7 +22,10 @@ bomenkap, …) bij jou in de buurt, via de openbare SRU-zoekdienst van
   activiteit, bijvoorbeeld een boom bij kappen). Entiteiten verschijnen en verdwijnen vanzelf.
 - **Dashboardkaart** `custom:bekendmakingen-map-card`, wordt automatisch geladen: gekleurde markers
   per rubriek, een popup met de velden die je kiest, een optionele lijst onder de kaart en
-  Nederlandse achtergrondkaarten van PDOK (Kadaster).
+  Nederlandse achtergrondkaarten van PDOK (Kadaster). Nieuwe bekendmakingen krijgen een badge
+  *Nieuw* tot je ze opent.
+- **Adres volgen**: markeer het adres van een bekendmaking, dan krijgen die en elke latere
+  bekendmaking op hetzelfde adres een badge *Wordt gevolgd* en `followed: true`.
 - **AI-samenvattingen** (optioneel): kies in de opties een
   [AI-taak](https://www.home-assistant.io/integrations/ai_task/)-entiteit, dan krijgt elke
   bekendmaking binnen de straal een korte samenvatting en een inschatting van de impact
@@ -46,17 +49,19 @@ height: 400
 tiles: pdok              # pdok, pdok_grijs, pdok_luchtfoto, osm of een {z}/{x}/{y}-URL
 dark_mode: auto          # auto, light of dark
 show_list: true          # lijst onder de kaart
-list_sort: distance      # distance, reaction_deadline of published
+list_sort: distance      # distance, first_seen, reaction_deadline of published
 open_only: false         # alleen bekendmakingen waarop je nog kunt reageren
 tap_action: popup        # popup of more-info
 attributes:              # velden in de popup, in deze volgorde
   - summary
   - impact
   - abstract
+  - address
   - rubriek
   - activiteit
   - authority
   - published
+  - first_seen
   - reaction_deadline
   - distance_m
 labels:                  # optioneel: eigen namen voor velden in de popup
@@ -72,8 +77,30 @@ styles:                  # optioneel: kleur en icoon per rubriek of activiteit
 ```
 
 Elk attribuut van een bekendmaking kan onder `attributes`; datums, afstand en impact worden
-netjes weergegeven, en bij de reactietermijn staat hoeveel dagen je nog hebt. De popup heeft een
-knop naar de bekendmaking en een knop naar het standaard detailvenster.
+netjes weergegeven, en bij de reactietermijn staat hoeveel dagen je nog hebt. De popup heeft
+knoppen naar de bekendmaking en het standaard detailvenster, en de knoppen *Adres volgen* en
+*Verbergen*.
+
+### De lijst
+Met `show_list: true` staat er een lijst onder de kaart. Elke regel toont het adres (als de
+bekendmaking er een heeft), de afstand en wanneer de integratie hem ophaalde ("opgehaald 3 uur
+geleden"), plus badges:
+
+- **Nieuw**: opgehaald sinds je laatst keek. De badge verdwijnt zodra je de bekendmaking opent;
+  *Alles gelezen* haalt ze allemaal weg. De eerste keer dat je de kaart gebruikt, tellen de
+  bekendmakingen die er al zijn als gelezen.
+- **Wordt gevolgd**: over een adres dat je volgt. Gevolgde bekendmakingen staan altijd bovenaan
+  de lijst en hebben op de kaart een gele ring.
+- **Dagen** die je nog hebt om te reageren, oranje bij 6 dagen of minder en rood bij 2 dagen of
+  minder.
+
+Boven de lijst sorteer je op *Afstand*, *Nieuwste eerst* (laatst opgehaald eerst) of *Termijn*
+(open reactietermijnen eerst, de eerstvolgende bovenaan), en filter je op *Nieuw*, *Gevolgd* en
+*Termijn open*. Filters gelden ook voor de kaart. Verborgen bekendmakingen zie je alleen met het
+filter *Verborgen*; daar kun je ze weer tonen.
+
+Wat je bekeken of verborgen hebt, wordt per Home Assistant-gebruiker bewaard en is dus op al je
+apparaten gelijk. De gekozen sortering en filters worden per browser onthouden.
 
 De standaard kaart van Home Assistant werkt ook, maar toont op de markers de eerste letters van
 elke titel:
@@ -102,10 +129,27 @@ geprobeerd. Na een herstart wacht de integratie tot vijf minuten tot de AI-taak 
 Bij een AI-dienst in de cloud is elke samenvatting één betaalde aanvraag. Ter indicatie: 100
 samenvattingen kosten ongeveer 1 cent met gpt-6-luna.
 
+## Een adres volgen
+Gebruik *Adres volgen* in de popup van de kaart, of de acties `officiele_bekendmakingen.follow`
+en `officiele_bekendmakingen.unfollow` met de `identifier` van een bekendmaking binnen de straal:
+
+```yaml
+action: officiele_bekendmakingen.follow
+data:
+  identifier: gmb-2026-123456
+```
+
+Een latere bekendmaking gaat over hetzelfde adres als beide dezelfde postcode en hetzelfde
+huisnummer hebben. Heeft een van beide geen adres (veel bekendmakingen geven alleen een gebied
+aan), dan telt hij mee als een van zijn locaties binnen 25 m van de gevolgde ligt. Een
+bekendmaking niet meer volgen stopt het volgen van zijn adres. Gevolgde adressen worden per zone
+bewaard.
+
 ## Melding bij nieuwe bekendmakingen
-De eventdata bevat `title`, `rubriek`, `activiteit`, `abstract`, `authority`, `published`,
-`reaction_deadline`, `distance_m`, `url`, `summary`, `impact`, `identifier`, `zone` en
-`entry_id`. `summary` en `impact` zijn leeg als AI-samenvattingen uit staan.
+De eventdata bevat `title`, `address`, `rubriek`, `activiteit`, `abstract`, `authority`,
+`published`, `first_seen`, `reaction_deadline`, `distance_m`, `url`, `summary`, `impact`,
+`followed`, `identifier`, `zone` en `entry_id`. `summary` en `impact` zijn leeg als
+AI-samenvattingen uit staan.
 
 ```yaml
 triggers:
@@ -118,6 +162,14 @@ actions:
       message: "{{ trigger.event.data.summary or trigger.event.data.title }}"
       data:
         url: "{{ trigger.event.data.url }}"
+```
+
+Alleen voor gevolgde adressen: voeg een voorwaarde toe.
+
+```yaml
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.followed }}"
 ```
 
 ## Installatie

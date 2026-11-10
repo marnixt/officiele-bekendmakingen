@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 from custom_components.officiele_bekendmakingen.api import (
+    Address,
     SruError,
     location_centroid,
     parse_response,
@@ -62,6 +63,9 @@ RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
             <overheidwetgeving:locatiepunt>52.0923086326301 5.12452564906022</overheidwetgeving:locatiepunt>
             <overheidwetgeving:locatiegebied>52.092309,5.1245256</overheidwetgeving:locatiegebied>
             <overheidwetgeving:huisnummer>22</overheidwetgeving:huisnummer>
+            <overheidwetgeving:postcode>3512HH</overheidwetgeving:postcode>
+            <overheidwetgeving:straatnaam>Kromme Nieuwegracht</overheidwetgeving:straatnaam>
+            <overheidwetgeving:woonplaats>Utrecht</overheidwetgeving:woonplaats>
           </overheidwetgeving:Adres></overheidwetgeving:gebiedsmarkering>
         </overheidwetgeving:tpmeta>
       </overheidwetgeving:meta></gzd:originalData>
@@ -103,6 +107,20 @@ def test_parse_response_lat_lon_point():
     _, items = parse_response(RESPONSE)
 
     assert items[2].locations == ((52.092309, 5.1245256),)
+
+
+def test_parse_response_address():
+    _, items = parse_response(RESPONSE)
+
+    assert items[2].addresses == (Address("Kromme Nieuwegracht", "22", "3512HH", "Utrecht"),)
+    assert items[2].address == "Kromme Nieuwegracht 22, Utrecht"
+    assert items[0].addresses == ()
+    assert items[0].address is None
+
+
+def test_address_key_is_normalised():
+    assert Address(None, " 16C ", "5046 gk", None).key == ("5046GK", "16c")
+    assert Address("Straat", "1", None, None).key is None
 
 
 def test_location_centroid_lat_lon_point():

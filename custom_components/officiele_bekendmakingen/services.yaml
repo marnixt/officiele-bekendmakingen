@@ -1,0 +1,15 @@
+follow:
+  fields:
+    identifier:
+      required: true
+      example: gmb-2026-123456
+      selector:
+        text:
+
+unfollow:
+  fields:
+    identifier:
+      required: true
+      example: gmb-2026-123456
+      selector:
+        text:

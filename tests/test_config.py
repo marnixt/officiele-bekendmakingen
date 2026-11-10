@@ -1,6 +1,6 @@
 """Tests for authority suggestions, the SRU query and remembering announced publications."""
 
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from custom_components.officiele_bekendmakingen.api import Bekendmaking, SruClient
 from custom_components.officiele_bekendmakingen.config_flow import authority_options
@@ -53,15 +53,22 @@ def _nearby(identifier: str) -> NearbyBekendmaking:
     return NearbyBekendmaking(item, 100.0, (51.5, 5.0))
 
 
+NOW = datetime(2026, 10, 26, 14, 30, 5, 123, tzinfo=timezone(timedelta(hours=1)))
+
+
 def test_update_seen_reports_only_new_publications():
-    seen = {"gmb-1": "2026-10-20"}
-    new, updated = update_seen(seen, [_nearby("gmb-1"), _nearby("gmb-2")], date(2026, 10, 26))
+    seen = {"gmb-1": "2026-10-20T08:00:00+02:00"}
+    new, updated = update_seen(seen, [_nearby("gmb-1"), _nearby("gmb-2")], NOW)
     assert [n.item.identifier for n in new] == ["gmb-2"]
-    assert updated == {"gmb-1": "2026-10-20", "gmb-2": "2026-10-26"}
+    assert updated == {
+        "gmb-1": "2026-10-20T08:00:00+02:00",
+        "gmb-2": "2026-10-26T14:30:05+01:00",
+    }
 
 
 def test_update_seen_forgets_old_entries():
+    # Entries from before first seen became a timestamp are plain dates.
     seen = {"gmb-old": "2025-01-01", "gmb-1": "2026-10-20"}
-    new, updated = update_seen(seen, [], date(2026, 10, 26))
+    new, updated = update_seen(seen, [], NOW)
     assert new == []
     assert updated == {"gmb-1": "2026-10-20"}

@@ -21,5 +21,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/marnixt/officiele-bekendmakingen/issues",
   "requirements": [],
-  "version": "0.4.3"
+  "version": "0.5.0"
 }

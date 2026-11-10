@@ -111,6 +111,8 @@ def _coordinator(options: dict, summaries: dict, pending: list, latest: list):
     coordinator._summary_store = AsyncMock()
     coordinator._pending = pending
     coordinator._latest = latest
+    coordinator._seen = {}
+    coordinator._follows = []
     coordinator.async_update_listeners = MagicMock()
     return coordinator
 

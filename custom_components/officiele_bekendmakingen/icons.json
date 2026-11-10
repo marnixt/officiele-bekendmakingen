@@ -1,0 +1,10 @@
+{
+  "services": {
+    "follow": {
+      "service": "mdi:map-marker-star"
+    },
+    "unfollow": {
+      "service": "mdi:map-marker-remove"
+    }
+  }
+}

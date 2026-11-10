@@ -95,6 +95,18 @@
               "medium": "Middel",
               "high": "Hoog"
             }
+          },
+          "identifier": {
+            "name": "Kenmerk"
+          },
+          "address": {
+            "name": "Adres"
+          },
+          "first_seen": {
+            "name": "Eerst gezien"
+          },
+          "followed": {
+            "name": "Wordt gevolgd"
           }
         }
       }
@@ -131,6 +143,33 @@
       "invalid_zone": "Deze zone heeft geen locatie.",
       "no_authorities_found": "Geen overheden gevonden rond deze zone. Ligt hij in Nederland?",
       "no_authorities_selected": "Selecteer minstens één overheid."
+    }
+  },
+  "services": {
+    "follow": {
+      "name": "Adres volgen",
+      "description": "Markeer het adres van een bekendmaking binnen de straal als gevolgd. Deze en elke latere bekendmaking op dat adres krijgen followed: true.",
+      "fields": {
+        "identifier": {
+          "name": "Kenmerk",
+          "description": "Kenmerk van de bekendmaking, bijv. gmb-2026-123456 (attribuut identifier)."
+        }
+      }
+    },
+    "unfollow": {
+      "name": "Adres niet meer volgen",
+      "description": "Stop met het volgen van het adres van een bekendmaking binnen de straal.",
+      "fields": {
+        "identifier": {
+          "name": "Kenmerk",
+          "description": "Kenmerk van de bekendmaking, bijv. gmb-2026-123456 (attribuut identifier)."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "unknown_publication": {
+      "message": "Bekendmaking {identifier} ligt niet binnen de straal van een zone."
     }
   }
 }

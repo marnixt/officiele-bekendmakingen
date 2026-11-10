@@ -97,6 +97,6 @@ class PublicationEvent(CoordinatorEntity[BekendmakingenCoordinator], Geolocation
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         return {
-            **self._nearby.as_dict(self.coordinator.summary(self._nearby.item.identifier)),
+            **self.coordinator.attributes(self._nearby),
             "zone": self.coordinator.config_entry.data[CONF_ZONE],
         }

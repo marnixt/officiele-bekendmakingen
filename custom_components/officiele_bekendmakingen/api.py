@@ -29,6 +29,29 @@ class SruError(Exception):
 
 
 @dataclass(frozen=True)
+class Address:
+    """A street address that a publication is about."""
+
+    street: str | None
+    number: str | None
+    postcode: str | None
+    city: str | None
+
+    @property
+    def key(self) -> tuple[str, str] | None:
+        """(postcode, house number) in a normalised form, if both are known."""
+        if not self.postcode or not self.number:
+            return None
+        return self.postcode.replace(" ", "").upper(), self.number.strip().lower()
+
+    @property
+    def label(self) -> str | None:
+        """The address as shown to the user, e.g. "Voorbeeldstraat 1, Voorbeeldstad"."""
+        street = " ".join(p for p in (self.street, self.number) if p)
+        return ", ".join(p for p in (street, self.city) if p) or None
+
+
+@dataclass(frozen=True)
 class Bekendmaking:
     """A single official publication."""
 
@@ -46,6 +69,13 @@ class Bekendmaking:
     abstract: str | None = None
     # The full text as XML; only fetched for AI summaries.
     content_url: str | None = None
+    # Street addresses, when the authority marked the location by address.
+    addresses: tuple[Address, ...] = field(default_factory=tuple)
+
+    @property
+    def address(self) -> str | None:
+        """The first address as text, if there is one."""
+        return next((a.label for a in self.addresses if a.label), None)
 
 
 def _parse_date(value: str | None) -> date | None:
@@ -110,6 +140,15 @@ def parse_record(record: ET.Element) -> Bekendmaking | None:
         locations=locations,
         abstract=_text(meta, "ow:owmsmantel/dcterms:abstract"),
         content_url=_text(record, ".//gzd:enrichedData/gzd:url"),
+        addresses=tuple(
+            Address(
+                street=_text(adres, "ow:straatnaam"),
+                number=_text(adres, "ow:huisnummer"),
+                postcode=_text(adres, "ow:postcode"),
+                city=_text(adres, "ow:woonplaats"),
+            )
+            for adres in meta.iterfind(".//ow:Adres", NS)
+        ),
     )
 
 

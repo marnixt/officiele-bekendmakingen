@@ -19,7 +19,8 @@
 - Useful fields per record: `dcterms:type` (rubriek), `overheidwetgeving:activiteit`,
   `overheidwetgeving:datumEindeReactietermijn`, `overheidwetgeving:locatiegebied` (WGS84 WKT with "lon lat", or a bare "lat,lon" point, which is
   the most common form and is used for addresses),
-  `dcterms:abstract` (short description, not always present), `gzd:preferredUrl`, `gzd:url` (text as XML).
+  `dcterms:abstract` (short description, not always present), `gzd:preferredUrl`, `gzd:url` (text as XML),
+  `overheidwetgeving:Adres` (`straatnaam`, `huisnummer`, `postcode`, `woonplaats`; only on a minority of records).
 
 ## Background
 - This is a rebuild, not a fork, of the community integration DonTranQuiL/Bekendmakingen. Avoid its problems:
@@ -45,6 +46,13 @@
   in `frontend/leaflet/` and loaded with `noConflict()`. Background tiles from PDOK (no key needed).
 - Brand icon: `brand/icon.png` (+ `@2x`, `dark_`) is `mdi:bullhorn-outline` rendered as PNG (256/512 px,
   transparent, trimmed). HA serves it since 2026.3; HACS/Marketplace picks it up from the latest GitHub release.
+- 0.5.0: list of the card gets badges (new, followed, days left), "fetched … ago", sort toggle
+  (distance / newest first / deadline), filters (new, followed, open, hidden) that also apply to the
+  map, "mark all read" and hide. Viewed/hidden/read_before live in the per-user frontend storage
+  (`frontend/subscribe_user_data`, key `officiele_bekendmakingen`); sort and filters in localStorage.
+  The integration stores first seen as a timestamp (`first_seen`) and followed addresses in a third
+  `Store` per entry (`follow.py`; postcode + house number, else within `FOLLOW_DISTANCE`), with
+  services `follow`/`unfollow` by `identifier` and `followed` in attributes and the event.
 - Next: filters on rubriek/activiteit in the integration itself.
 
 ## Conventions

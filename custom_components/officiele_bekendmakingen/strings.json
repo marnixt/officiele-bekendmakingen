@@ -95,6 +95,18 @@
               "medium": "Medium",
               "high": "High"
             }
+          },
+          "identifier": {
+            "name": "Identifier"
+          },
+          "address": {
+            "name": "Address"
+          },
+          "first_seen": {
+            "name": "First seen"
+          },
+          "followed": {
+            "name": "Followed"
           }
         }
       }
@@ -131,6 +143,33 @@
       "invalid_zone": "This zone has no location.",
       "no_authorities_found": "No authorities found around this zone. Is it in the Netherlands?",
       "no_authorities_selected": "Select at least one authority."
+    }
+  },
+  "services": {
+    "follow": {
+      "name": "Follow address",
+      "description": "Mark the address of a publication within the radius as followed. This and every later publication at that address get followed: true.",
+      "fields": {
+        "identifier": {
+          "name": "Identifier",
+          "description": "Identifier of the publication, e.g. gmb-2026-123456 (attribute identifier)."
+        }
+      }
+    },
+    "unfollow": {
+      "name": "Stop following address",
+      "description": "Stop following the address of a publication within the radius.",
+      "fields": {
+        "identifier": {
+          "name": "Identifier",
+          "description": "Identifier of the publication, e.g. gmb-2026-123456 (attribute identifier)."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "unknown_publication": {
+      "message": "Publication {identifier} is not within the radius of any zone."
     }
   }
 }
